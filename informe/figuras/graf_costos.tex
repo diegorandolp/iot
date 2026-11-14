@@ -1,15 +1,18 @@
-% Costo por bloque (S/), con los precios de la lista de materiales.
-% Actuación no incluye el buzzer ni el servo.
+% Costo por bloque (S/), con los precios de la lista de materiales (16 oct. 2026).
+% Procesamiento: ESP32 40. Adquisición: PIR 8 + MC-38 5 + SW-420 6 + MQ-2 10 = 29.
+% Conexiones: protoboard 7 + cables Dupont 8 + resistencias 2 + LED 0,6 = 17,6.
+% Actuación (precios estimados, no están en la lista): buzzer 3 + servo SG90 12 = 15.
+% Alimentación: cable USB 6.
 \begin{tikzpicture}
 \begin{axis}[grafico, xbar, bar width=0.42cm,
   width=\anchografico, height=\altografico,
   xmajorgrids, ymajorgrids=false,
-  symbolic y coords={act,adq,con,ali,pro},
-  ytick=data, yticklabels={Actuación, Adquisición, Conexiones, Alimentación, Procesamiento}, xmin=0, xmax=75,
+  symbolic y coords={ali,act,con,adq,pro},
+  ytick=data, yticklabels={Alimentación, Actuación (est.), Conexiones, Adquisición, Procesamiento}, xmin=0, xmax=50,
   xlabel={Costo (S/)},
   nodes near coords, every node near coord/.append style={font=\scriptsize, text=tinta},
   enlarge y limits=0.15]
   \addplot[fill=serie1, draw=white] coordinates
-    {(18,act) (19,adq) (22,con) (40,ali) (61,pro)};
+    {(6,ali) (15,act) (18,con) (29,adq) (40,pro)};
 \end{axis}
 \end{tikzpicture}

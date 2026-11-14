@@ -21,11 +21,8 @@
 \renewcommand{\anchografico}{7.2cm}
 \renewcommand{\altografico}{4.6cm}
 
-% Cuando los archivos de figuras/datos/ tengan las mediciones reales:
-% \datosdeejemplofalse
-
-% Enlace del video publicitario (también genera el código QR)
-\newcommand{\videourl}{https://youtu.be/PENDIENTE}
+% Enlace del video publicitario. Si se deja vacío, la lámina muestra solo la imagen.
+\def\videourl{}
 
 % ---------------------------------------------------------------
 % Tema académico sobrio
@@ -210,7 +207,7 @@
   \resizebox{\linewidth}{!}{\input{figuras/aportes}}
   \vspace{5mm}
   \begin{alertblock}{Lo que agregamos}
-    \centering Dos sensores deben coincidir, el pestillo espera a la puerta cerrada y el sistema se mide a sí mismo.
+    \centering Dos sensores deben coincidir, el pestillo se suelta con una orden y se traba al cerrar, y el sistema se mide a sí mismo.
   \end{alertblock}
 \end{frame}
 
@@ -222,7 +219,7 @@
     \column{0.52\textwidth}
     \centering
     \begin{tikzpicture}[font=\small]
-      \foreach \y/\a/\b in {0/Sirena de 12\,V/Buzzer SFM-20B, -0.8/Cerradura solenoide/Servo SG90 + pestillo, -1.6/Placa perforada/Shield de borneras, -2.4/Carcasa impresa en 3D/Casa de cartón reciclado, -3.2/Mosquitto en EC2/AWS IoT Core + Lambda, -4.0/App web/App móvil} {
+      \foreach \y/\a/\b in {0/Sirena de 12\,V/Buzzer SFM-20B, -0.8/Cerradura solenoide/Servo SG90 + pestillo, -1.6/Fuente de 12\,V + LM2596/Cable USB de 5\,V, -2.4/Placa perforada/Protoboard, -3.2/Carcasa impresa en 3D/Casa de cartón reciclado, -4.0/Mosquitto en EC2/AWS IoT Core + Lambda, -4.8/App web/App móvil} {
         \node[antes] (x) at (0,\y) {\a};
         \node[ahora] (y) at (4.3,\y) {\b};
         \draw[flecha] (x) -- (y);
@@ -233,18 +230,15 @@
     \column{0.46\textwidth}
     \centering
     \resizebox{\linewidth}{!}{\input{figuras/graf_corriente}}\par
-    {\footnotesize La fuente de 2\,A ya alcanza con margen.}
+    {\footnotesize Peor caso estimado: de 27\,W a unos 7\,W.}
   \end{columns}
 \end{frame}
 
 \begin{frame}{Componentes}
   \begin{columns}[T]
-    \column{0.135\textwidth}\foto{esp32.jpg}{2.2cm}{ESP32}{Decide y publica}
-    \column{0.135\textwidth}\foto{rele.jpg}{2.2cm}{Relé}{Enciende el buzzer}
-    \column{0.135\textwidth}\fotopropia{buzzer.jpg}{2.2cm}{Buzzer}{Alarma}{Foto del buzzer SFM-20B}
-    \column{0.135\textwidth}\fotopropia{sg90.jpg}{2.2cm}{Servo SG90}{Pestillo}{Foto del servo SG90}
-    \column{0.135\textwidth}\fotopropia{lm2596.jpg}{2.2cm}{LM2596}{12 a 5\,V}{LM2596 con el multímetro en 5,0\,V}
-    \column{0.135\textwidth}\foto{esp32cam.jpg}{2.2cm}{ESP32-CAM}{Opcional}
+    \column{0.2\textwidth}\foto{esp32.jpg}{2.2cm}{ESP32}{Decide y publica}
+    \column{0.36\textwidth}\fotopropia{buzzer_sg90.jpeg}{2.2cm}{Buzzer y servo SG90}{Alarma y pestillo}{Foto del buzzer SFM-20B y del servo SG90}
+    \column{0.2\textwidth}\foto{esp32cam.jpg}{2.2cm}{ESP32-CAM}{Opcional}
   \end{columns}
   \vspace{4mm}
   \begin{columns}[T]
@@ -252,10 +246,10 @@
     \begin{block}{Núcleo}
       \small
       \begin{itemize}
-        \item Sensores PIR, MC-38 y SW-420
-        \item Buzzer y servo como actuadores
+        \item Sensores PIR, MC-38 y SW-420, y MQ-2 para humo
+        \item Buzzer, servo y dos LED de estado
         \item Wi-Fi + MQTT/TLS hacia AWS IoT Core
-        \item App móvil con apertura por PIN y 6 métricas
+        \item App móvil con apertura por PIN
       \end{itemize}
     \end{block}
     \column{0.48\textwidth}
@@ -268,7 +262,7 @@
       \end{itemize}
     \end{block}
   \end{columns}
-  \credito{Fotos referenciales de Wikimedia Commons: ESP32 por Edwiyanto, relé por Suyash Dwivedi, ESP32-CAM por Nowforever (CC BY-SA 4.0).}
+  \credito{Fotos referenciales de Wikimedia Commons: ESP32 por Edwiyanto y ESP32-CAM por Nowforever (CC BY-SA 4.0).}
 \end{frame}
 
 \begin{frame}{Diagrama de bloques}
@@ -291,21 +285,17 @@
 \section{Implementación}
 
 \begin{frame}{Etapa 1 · Percepción e interconexiones}
-  \centering
-  \resizebox{0.92\linewidth}{!}{\input{figuras/conexiones}}
-  \vspace{3mm}
-  \begin{columns}[T]
-    \column{0.45\textwidth}
+  \begin{columns}[c]
+    \column{0.62\textwidth}
+    \centering
+    \resizebox{\linewidth}{!}{\input{figuras/conexiones}}
+    \column{0.36\textwidth}
     \small
     \begin{itemize}
-      \item Servo con 5\,V del LM2596, nunca del ESP32
-      \item Todas las tierras unidas
-    \end{itemize}
-    \column{0.45\textwidth}
-    \small
-    \begin{itemize}
-      \item SW-420 a 3,3\,V
-      \item Relé con jumper en H
+      \item SW-420 a 3,3\,V y todas las tierras unidas
+      \item MQ-2 con divisor de 10\,k$\Omega$ y 20\,k$\Omega$ en el ADC1
+      \item Buzzer directo al GPIO 32
+      \item LED rojo y verde con 220\,$\Omega$
     \end{itemize}
   \end{columns}
 \end{frame}
@@ -319,6 +309,7 @@
     \begin{itemize}
       \item Un sensor solo es una \textbf{alerta leve}
       \item Dos sensores distintos en 10\,s son un \textbf{evento crítico}
+      \item La decisión se toma antes de publicar, sin esperar a la red
       \item Cada 30\,s sale un latido con el RSSI
     \end{itemize}
     \column{0.42\textwidth}
@@ -335,10 +326,11 @@
     \column{0.42\textwidth}
     \small
     \begin{itemize}
-      \item El relé enciende el buzzer con la línea de 12\,V
-      \item El servo traba la puerta solo si el MC-38 la ve cerrada
-      \item Con la puerta abierta, el bloqueo espera
-      \item Un capacitor de 1000\,\textmu F evita que el ESP32 se reinicie
+      \item Todo funciona con los 5\,V del cable USB, hoy desde una laptop
+      \item La puerta está trabada por defecto y se suelta con la orden de la app
+      \item El MC-38 ve que se abrió y cerró, y el servo la traba otra vez
+      \item Más de 1\,min abierta: buzzer hasta que se cierre
+      \item Humo en el MQ-2: buzzer y la puerta se destraba
     \end{itemize}
   \end{columns}
 \end{frame}
@@ -391,7 +383,7 @@
     \column{0.5\textwidth}
     \small
     \begin{itemize}
-      \item Las métricas se calculan en una Lambda \pendiente{por crear}
+      \item El cálculo automático de las métricas queda para una siguiente etapa
       \item La app consulta cada 10 a 30\,s
     \end{itemize}
   \end{columns}
@@ -399,19 +391,19 @@
 
 \begin{frame}{Aplicación móvil}
   \centering
-  \imagen{app.png}{0.85\linewidth}{0.75\textheight}{Capturas de la aplicación móvil puestas lado a lado: estado del nodo, historial de eventos y gráficos de métricas.}
+  \imagen{app.png}{0.85\linewidth}{0.75\textheight}{Capturas de la aplicación móvil puestas lado a lado: estado del nodo, lista de eventos y teclado del PIN.}
 \end{frame}
 
 \begin{frame}{Armado del prototipo}
   \begin{columns}[T]
-    \column{0.32\textwidth}\fotopropia{prototipo.jpg}{2.45cm}{Casa terminada}{Cartón reciclado}{Casa terminada, vista frontal}
-    \column{0.32\textwidth}\fotopropia{compartimento.jpg}{2.45cm}{Electrónica en la base}{Oculta bajo la casa}{Base abierta con ESP32, relé, LM2596 y protoboard}
-    \column{0.32\textwidth}\fotopropia{puerta.jpg}{2.45cm}{Puerta}{Reed e imán}{Puerta abierta con el reed y el imán}
+    \column{0.32\textwidth}\fotopropia{prototipo.jpeg}{2.45cm}{Casa terminada}{Cartón reciclado}{Casa terminada, vista frontal}
+    \column{0.32\textwidth}\fotopropia{compartimento.jpeg}{2.45cm}{Electrónica en la base}{Oculta bajo la casa}{Base abierta con ESP32, protoboard y cableado}
+    \column{0.32\textwidth}\fotopropia{puerta.jpeg}{2.45cm}{Puerta}{Reed e imán}{Puerta abierta con el reed y el imán}
   \end{columns}
   \vspace{2mm}
   \begin{columns}[T]
-    \column{0.32\textwidth}\fotopropia{sw420.jpg}{2.45cm}{SW-420}{Pared izquierda}{SW-420 pegado por dentro}
-    \column{0.32\textwidth}\fotopropia{servo.jpg}{2.45cm}{Servo y pestillo}{En el piso de la casa}{Servo con el pestillo trabando la puerta}
+    \column{0.32\textwidth}\fotopropia{sw420.jpeg}{2.45cm}{SW-420}{Pared izquierda}{SW-420 pegado por dentro}
+    \column{0.32\textwidth}\fotopropia{servo.jpeg}{2.45cm}{Servo y pestillo}{En el piso de la casa}{Servo con el pestillo trabando la puerta}
     \column{0.32\textwidth}\fotopropia{prueba.jpg}{2.45cm}{Pruebas}{Equipo trabajando}{Equipo probando un evento crítico con la app abierta}
   \end{columns}
 \end{frame}
@@ -434,58 +426,47 @@
     5 & \texttt{GET /estado} y \texttt{GET /eventos} desde el navegador & \textcolor{cAct}{\textbf{Correcto}} \\
     6 & \texttt{POST /abrir} con \texttt{curl} & \textcolor{cAct}{\textbf{Correcto}} \\
     \bottomrule
-  \end{tabular}\par\vspace{4mm}
-  {\small Falta la prueba con el ESP32 real \pendiente{actualizar}}
+  \end{tabular}
 \end{frame}
 
-\begin{frame}{Pruebas funcionales}
+\begin{frame}{Escenarios funcionales}
   \small
   \renewcommand{\arraystretch}{1.1}
   \centering
-  \begin{tabular}{@{}cl>{\raggedright\arraybackslash}p{4.6cm}c@{}}
+  \begin{tabular}{@{}cl>{\raggedright\arraybackslash}p{5.2cm}@{}}
     \toprule
-    \textbf{N.°} & \textbf{Escenario} & \textbf{Esperado} & \textbf{Resultado} \\
+    \textbf{N.°} & \textbf{Escenario} & \textbf{Comportamiento del programa} \\
     \midrule
-    1 & Solo PIR & Alerta leve & \pendiente{?} \\
-    2 & Golpe y apertura en menos de 10\,s & Buzzer y pestillo & \pendiente{?} \\
-    3 & PIR y apertura con más de 10\,s & Dos alertas leves & \pendiente{?} \\
-    4 & Crítico con la puerta abierta & El pestillo espera el cierre & \pendiente{?} \\
-    5 & Crítico sin Wi-Fi & Alarma local igual & \pendiente{?} \\
-    6 & Servo y buzzer a la vez & El ESP32 no se reinicia & \pendiente{?} \\
-    7 & Alerta marcada como falsa & Sube la tasa de falsas & \pendiente{?} \\
-    8 & Abrir desde la app con PIN & Pestillo suelto 3\,s, sin alarma & \pendiente{?} \\
-    9 & Abrir sin orden previa & Evento \texttt{puerta\_forzada} & \pendiente{?} \\
+    1 & Solo PIR & Alerta leve \\
+    2 & Golpe y apertura en menos de 10\,s & Buzzer y pestillo \\
+    3 & PIR y apertura con más de 10\,s & Dos alertas leves \\
+    4 & Abrir desde la app con PIN y cerrar & Pestillo suelto y se traba al cerrar \\
+    5 & Puerta abierta más de 1\,min & Buzzer hasta cerrarla \\
+    6 & Crítico sin Wi-Fi & Alarma local igual \\
+    7 & Servo y buzzer a la vez & El ESP32 no se reinicia \\
+    8 & Humo frente al MQ-2 & Buzzer y pestillo suelto \\
+    9 & Abrir sin orden previa & Evento \texttt{puerta\_forzada} \\
     \bottomrule
   \end{tabular}
 \end{frame}
 
-\begin{frame}{Latencia y enlace}
-  \begin{columns}[T]
-    \column{0.49\textwidth}
-    \centering
-    \resizebox{\linewidth}{!}{\input{figuras/graf_latencia}}\par
-    \small p95 = \pendiente{X}\,ms, meta 2\,s
-    \column{0.49\textwidth}
-    \centering
-    \resizebox{\linewidth}{!}{\input{figuras/graf_rssi}}\par
-    \small Disponibilidad \pendiente{X}\,\%, RSSI \pendiente{X}\,dBm
-  \end{columns}
-\end{frame}
-
-\begin{frame}{Eventos y falsas alarmas}
+\begin{frame}{Sesión de prueba}
   \begin{columns}[c]
     \column{0.52\textwidth}
     \centering
-    \resizebox{\linewidth}{!}{\input{figuras/graf_eventos}}
-    \column{0.44\textwidth}
-    \begin{block}{En números}
+    \imagen{prueba.jpg}{\linewidth}{5.5cm}{Equipo probando un evento crítico en el prototipo, con la aplicación abierta en un celular.}
+    \column{0.46\textwidth}
+    \begin{block}{Historial del 13 de noviembre}
       \small
       \begin{itemize}
-        \item Falsas alarmas \pendiente{X}\,\%
-        \item Críticos falsos \pendiente{X}
-        \item Pérdida de mensajes \pendiente{X}\,\%
+        \item 22:38:19, movimiento, leve
+        \item 22:40:42, PIN incorrecto
+        \item 22:41:05, apertura desde la app
+        \item 22:44:14, vibración, leve
+        \item 22:44:18, puerta forzada, crítica
       \end{itemize}
     \end{block}
+    {\small Golpe y apertura con 4\,s de diferencia, dentro de la ventana de 10\,s.}
   \end{columns}
 \end{frame}
 
@@ -503,7 +484,7 @@
     \column{0.45\textwidth}
     \small
     \begin{itemize}
-      \item Materiales del nodo por unos S/~160, sin buzzer ni servo
+      \item Electrónica del nodo por unos S/~108, con buzzer y servo estimados
       \item La alarma local funciona sin suscripción
       \item La app muestra lo que una alarma barata no muestra
       \item La nube cobra por uso, sin un servidor encendido
@@ -511,6 +492,12 @@
   \end{columns}
 \end{frame}
 
+\ifx\videourl\empty
+\begin{frame}{Video publicitario}
+  \centering
+  \imagen{video.jpg}{0.75\linewidth}{6cm}{Fotograma del video con los cuatro integrantes y el prototipo.}
+\end{frame}
+\else
 \begin{frame}{Video publicitario}
   \begin{columns}[c]
     \column{0.6\textwidth}
@@ -522,6 +509,7 @@
     {\footnotesize\url{\videourl}}
   \end{columns}
 \end{frame}
+\fi
 
 \begin{frame}{Demostración en vivo}
   \begin{columns}[c]
@@ -530,13 +518,13 @@
       \node[paso] (p1) {1};
       \node[right=3mm of p1, text width=6.6cm] {Pasar la mano frente al PIR. En la app aparece una \textbf{alerta leve}.};
       \node[paso, below=8mm of p1] (p2) {2};
-      \node[right=3mm of p2, text width=6.6cm] {Golpear la puerta y abrirla. Suena el \textbf{buzzer} y, al cerrarla, el \textbf{pestillo} la traba.};
+      \node[right=3mm of p2, text width=6.6cm] {Golpear la puerta y abrirla. Suena el \textbf{buzzer} y el \textbf{pestillo} se traba.};
       \node[paso, below=8mm of p2] (p3) {3};
       \node[right=3mm of p3, text width=6.6cm] {Apagar el Wi-Fi y repetir. La alarma local sigue funcionando.};
       \node[paso, below=8mm of p3] (p4) {4};
-      \node[right=3mm of p4, text width=6.6cm] {Abrir desde la app con el PIN. El pestillo se suelta 3\,s y vuelve a trabar.};
+      \node[right=3mm of p4, text width=6.6cm] {Abrir desde la app con el PIN. El pestillo se suelta, y al abrir y cerrar la puerta se traba solo.};
       \node[paso, below=8mm of p4] (p5) {5};
-      \node[right=3mm of p5, text width=6.6cm] {Mostrar la latencia y la disponibilidad en la app.};
+      \node[right=3mm of p5, text width=6.6cm] {Acercar humo al MQ-2. Suena el buzzer y la puerta se destraba.};
     \end{tikzpicture}
     \column{0.36\textwidth}
     \begin{alertblock}{Red para la demo}
@@ -556,9 +544,9 @@
       \begin{itemize}
         \item La regla de 10\,s separa alertas leves de eventos críticos con una lógica simple
         \item La alarma y el bloqueo no dependen de Internet
-        \item El peor caso bajó de 2,26\,A a unos 0,7\,A
+        \item El peor caso bajó de unos 27\,W a unos 7\,W, con todo a 5\,V por USB
         \item AWS IoT Core y Lambda quitaron el servidor que había que mantener
-        \item \pendiente{Latencia p95 frente a la meta de 2\,s}
+        \item Falta medir la latencia p95 frente a la meta de 2\,s
       \end{itemize}
     \end{block}
     \column{0.46\textwidth}
@@ -567,9 +555,9 @@
       \begin{itemize}
         \item Batería de respaldo
         \item Inicio de sesión en la API con Amazon Cognito
+        \item Métricas, falsas alarmas y armar o silenciar en la app
         \item PCB propia en lugar del protoboard
-        \item Varios nodos y zonas
-        \item ESP32-CAM, MQ-2 y detección por CSI \cite{zhuang2021intrusion}
+        \item Varios nodos, ESP32-CAM y detección por CSI \cite{zhuang2021intrusion}
       \end{itemize}
     \end{block}
   \end{columns}

@@ -1,38 +1,37 @@
 \begin{tikzpicture}[font=\footnotesize]
   % Percepción
-  \node[caja=cSensor] (pir) at (-2.7,0)  {PIR\\{\scriptsize movimiento}};
-  \node[caja=cSensor] (mag) at (0,0)     {MC-38\\{\scriptsize apertura}};
-  \node[caja=cSensor] (vib) at (2.7,0)   {SW-420\\{\scriptsize golpes}};
+  \node[caja=cSensor] (pir) at (-4.05,0) {PIR\\{\scriptsize movimiento}};
+  \node[caja=cSensor] (mag) at (-1.35,0) {MC-38\\{\scriptsize apertura}};
+  \node[caja=cSensor] (vib) at (1.35,0)  {SW-420\\{\scriptsize golpes}};
+  \node[caja=cSensor] (gas) at (4.05,0)  {MQ-2\\{\scriptsize humo}};
   % Procesamiento
-  \node[caja=cProc, minimum height=1cm] (esp) at (0,-1.9) {\textbf{ESP32}\\{\scriptsize regla de 10\,s}};
+  \node[caja=cProc, minimum width=4.4cm, minimum height=1cm] (esp) at (0,-1.9) {\textbf{ESP32}\\{\scriptsize regla de 10\,s y control de la puerta}};
   % Actuación
-  \node[caja=cAct] (relay) at (-1.6,-3.7) {Relé};
-  \node[caja=cAct] (buz)   at (-1.6,-5.3) {Buzzer\\{\scriptsize alarma}};
-  \node[caja=cAct] (servo) at (1.6,-3.7)  {Servo SG90\\{\scriptsize pestillo}};
+  \node[caja=cAct] (buz)   at (-2.9,-3.7) {Buzzer\\{\scriptsize alarma}};
+  \node[caja=cAct] (servo) at (0,-3.7)    {Servo SG90\\{\scriptsize pestillo}};
+  \node[caja=cAct] (led)   at (2.9,-3.7)  {LED\\{\scriptsize estado}};
   % Energía
-  \node[caja=cPower, minimum width=1.9cm] (lm)  at (-4.9,-1.9) {LM2596\\{\scriptsize 12 a 5\,V}};
-  \node[caja=cPower, minimum width=1.9cm] (psu) at (-4.9,-3.7) {Fuente\\{\scriptsize 12\,V, 2\,A}};
+  \node[caja=cPower, minimum width=1.9cm] (usb) at (-5.4,-1.9) {Cable USB\\{\scriptsize 5\,V}};
   % Nube
-  \node[caja=cApp, minimum width=2.1cm] (brk) at (5.4,-1.9) {IoT Core\\{\scriptsize broker MQTT}};
-  \node[caja=cApp, minimum width=2.1cm] (db)  at (5.4,-3.7) {DynamoDB};
-  \node[caja=cApp, minimum width=2.1cm] (lam) at (8.4,-1.9) {Lambda};
-  \node[caja=cApp, minimum width=2.1cm] (api) at (8.4,-3.7) {API Gateway};
-  \node[caja=cApp, minimum width=2.1cm] (web) at (8.4,-5.3) {App móvil};
+  \node[caja=cApp, minimum width=2.1cm] (brk) at (6.9,-1.9) {IoT Core\\{\scriptsize broker MQTT}};
+  \node[caja=cApp, minimum width=2.1cm] (db)  at (6.9,-3.7) {DynamoDB};
+  \node[caja=cApp, minimum width=2.1cm] (lam) at (9.9,-1.9) {Lambda};
+  \node[caja=cApp, minimum width=2.1cm] (api) at (9.9,-3.7) {API Gateway};
+  \node[caja=cApp, minimum width=2.1cm] (web) at (9.9,-5.3) {App móvil};
   \node[draw=cApp, dashed, rounded corners=3pt, inner sep=5pt, fit=(brk)(db)(lam)(api),
     label={[font=\scriptsize, text=cApp]above:AWS}] {};
 
   % Sensores al ESP32
-  \draw[flecha] (pir.south) -- ++(0,-0.45) -| ([xshift=-7mm]esp.north);
-  \draw[flecha] (mag.south) -- (esp.north);
-  \draw[flecha] (vib.south) -- ++(0,-0.45) -| ([xshift=7mm]esp.north);
+  \draw[flecha] (pir.south) -- ++(0,-0.5) -| ([xshift=-20mm]esp.north);
+  \draw[flecha] (mag.south) -- (mag.south |- esp.north);
+  \draw[flecha] (vib.south) -- (vib.south |- esp.north);
+  \draw[flecha] (gas.south) -- ++(0,-0.5) -| ([xshift=20mm]esp.north);
   % ESP32 a actuadores
-  \draw[flecha] ([xshift=-5mm]esp.south) |- ++(0,-0.4) -| (relay.north);
-  \draw[flecha] ([xshift=5mm]esp.south) |- ++(0,-0.4) -| (servo.north);
-  \draw[flecha] (relay) -- (buz);
+  \draw[flecha] ([xshift=-18mm]esp.south) -- ++(0,-0.4) -| (buz.north);
+  \draw[flecha] (esp.south) -- (servo.north);
+  \draw[flecha] ([xshift=18mm]esp.south) -- ++(0,-0.4) -| (led.north);
   % Energía
-  \draw[flecha, draw=cPower] (psu) -- node[etiqueta, left] {12\,V} (lm);
-  \draw[flecha, draw=cPower] (lm) -- node[etiqueta, above] {5\,V} (esp);
-  \draw[flecha, draw=cPower] (psu) -- node[etiqueta, above] {12\,V} (relay);
+  \draw[flecha, draw=cPower] (usb) -- node[etiqueta, above] {5\,V} (esp);
   % Red y nube
   \draw[flecha, <->, dashed, draw=cApp] (esp) -- node[etiqueta, above, text=cApp] {Wi-Fi} node[etiqueta, below, text=cApp] {MQTT/TLS} (brk);
   \draw[flecha, draw=cApp] (brk) -- node[etiqueta, left, text=cApp] {reglas} (db);

@@ -1,44 +1,46 @@
-% Interconexiones del nodo: qué pin del ESP32 va a cada módulo.
+% Interconexiones del nodo: qué pin del ESP32 va a cada módulo (pines del programa).
 \begin{tikzpicture}[font=\footnotesize,
   pin/.style={font=\scriptsize\ttfamily, text=black!80},
   nota/.style={font=\scriptsize, text=black!55},
   senal/.style={thick, draw=black!75},
-  v12/.style={thick, draw=red!65!black},
 ]
   % ESP32 con sus pines
-  \node[caja=cProc, minimum width=2.6cm, minimum height=4.4cm] (esp) at (0,0) {};
-  \node[font=\footnotesize\bfseries, text=cProc] at (0,1.85) {ESP32};
-  \node[pin, anchor=west] (p27) at (-1.25,1.0)  {GPIO27};
-  \node[pin, anchor=west] (p26) at (-1.25,0.0)  {GPIO26};
-  \node[pin, anchor=west] (p25) at (-1.25,-1.0) {GPIO25};
-  \node[pin, anchor=east] (p23) at (1.25,1.0)   {GPIO23};
-  \node[pin, anchor=east] (p18) at (1.25,-0.4)  {GPIO18};
-  \node[pin, anchor=east] (pvin) at (1.25,-1.9) {VIN};
-  \node[pin, anchor=west] (p33) at (-1.25,-1.8) {3V3};
+  \node[caja=cProc, minimum width=2.6cm, minimum height=5.4cm] (esp) at (0,0) {};
+  \node[font=\footnotesize\bfseries, text=cProc] at (0,2.4) {ESP32};
+  \node[pin, anchor=west] at (-1.25,1.5)  {GPIO27};
+  \node[pin, anchor=west] at (-1.25,0.5)  {GPIO26};
+  \node[pin, anchor=west] at (-1.25,-0.5) {GPIO25};
+  \node[pin, anchor=west] at (-1.25,-1.5) {GPIO34};
+  \node[pin, anchor=east] at (1.25,1.5)   {GPIO32};
+  \node[pin, anchor=east] at (1.25,0.5)   {GPIO33};
+  \node[pin, anchor=east] at (1.25,-0.5)  {GPIO14};
+  \node[pin, anchor=east] at (1.25,-1.5)  {GPIO13};
+  \node[nota, align=center] at (0,-2.25) {GPIO2: LED azul\\de la placa};
 
   % Sensores a la izquierda
-  \node[caja=cSensor, minimum width=1.9cm] (pir) at (-4.3,1.0)  {PIR};
-  \node[caja=cSensor, minimum width=1.9cm] (mag) at (-4.3,0.0)  {MC-38};
-  \node[caja=cSensor, minimum width=1.9cm] (vib) at (-4.3,-1.0) {SW-420};
-  \draw[senal] (pir.east) -- (esp.west |- pir.east);
-  \draw[senal] (mag.east) -- (esp.west |- mag.east);
-  \draw[senal] (vib.east) -- (esp.west |- vib.east);
+  \node[caja=cSensor, minimum width=1.9cm] (pir) at (-4.3,1.5)  {PIR};
+  \node[caja=cSensor, minimum width=1.9cm] (mag) at (-4.3,0.5)  {MC-38};
+  \node[caja=cSensor, minimum width=1.9cm] (vib) at (-4.3,-0.5) {SW-420};
+  \node[caja=cSensor, minimum width=1.9cm] (gas) at (-4.3,-1.5) {MQ-2};
+  \foreach \s in {pir,mag,vib,gas} \draw[senal] (\s.east) -- (esp.west |- \s.east);
   \node[nota, left=1pt of pir] {5\,V};
   \node[nota, left=1pt of mag] {GND};
   \node[nota, left=1pt of vib] {3,3\,V};
+  \node[nota, left=1pt of gas, align=right] {5\,V y divisor\\10\,k$\Omega$ / 20\,k$\Omega$};
 
   % Actuadores a la derecha
-  \node[caja=cAct, minimum width=1.9cm] (rel) at (4.1,1.0)  {Relé CH1\\{\scriptsize jumper en H}};
-  \node[caja=cAct, minimum width=1.9cm] (srv) at (4.1,-0.4) {Servo SG90};
-  \node[caja=cAct, minimum width=1.9cm] (buz) at (7.3,1.0)  {Buzzer};
-  \draw[senal] (esp.east |- rel.west) -- node[etiqueta, above] {IN1} (rel.west);
+  \node[caja=cAct, minimum width=1.9cm] (buz) at (4.3,1.5)  {Buzzer};
+  \node[caja=cAct, minimum width=1.9cm] (lr)  at (4.3,0.5)  {LED rojo};
+  \node[caja=cAct, minimum width=1.9cm] (lv)  at (4.3,-0.5) {LED verde};
+  \node[caja=cAct, minimum width=1.9cm] (srv) at (4.3,-1.5) {Servo SG90};
+  \draw[senal] (esp.east |- buz.west) -- (buz.west);
+  \draw[senal] (esp.east |- lr.west) -- node[etiqueta, above] {220\,$\Omega$} (lr.west);
+  \draw[senal] (esp.east |- lv.west) -- node[etiqueta, above] {220\,$\Omega$} (lv.west);
   \draw[senal] (esp.east |- srv.west) -- node[etiqueta, above] {PWM} (srv.west);
-  \draw[v12] (rel.east) -- node[etiqueta, above] {NO} (buz.west);
-  \draw[v12] (rel.north) -- ++(0,0.5) node[above, font=\scriptsize, text=red!65!black] {12\,V a COM};
-  \node[nota, below=1pt of srv] {+ 1000\,\textmu F};
+  \node[nota, right=1pt of srv] {5\,V};
 
-  % Alimentación de 5 V
-  \node[caja=cPower, minimum width=1.9cm] (lm) at (4.1,-1.9) {LM2596\\{\scriptsize 5,0\,V}};
-  \draw[thick, draw=cPower] (lm.west) -- (esp.east |- lm.west);
-  \node[nota, anchor=north] at (0,-2.45) {Todas las tierras unidas};
+  % Alimentación
+  \node[caja=cPower, minimum width=1.9cm] (usb) at (0,-3.9) {Cable USB\\{\scriptsize 5\,V}};
+  \draw[thick, draw=cPower] (usb.north) -- (esp.south);
+  \node[nota, anchor=west] at (1.4,-3.9) {Todas las tierras unidas};
 \end{tikzpicture}

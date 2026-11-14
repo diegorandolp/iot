@@ -10,17 +10,17 @@ FIGURAS := $(wildcard $(INFORME)/figuras/*.tex $(INFORME)/figuras/datos/*.dat \
 
 todo: informe slides zip
 
-informe: $(INFORME)/main.pdf
+informe: $(INFORME)/main.pdf $(INFORME)/main.human.pdf
 slides: $(INFORME)/slides.pdf
 zip: $(ZIP)
 
 $(INFORME)/%.pdf: $(INFORME)/%.tex $(FIGURAS)
 	cd $(INFORME) && tectonic $*.tex
 
-$(ZIP): $(INFORME)/main.tex $(INFORME)/slides.tex $(INFORME)/LEEME.txt $(FIGURAS)
+$(ZIP): $(INFORME)/main.tex $(INFORME)/main.human.tex $(INFORME)/slides.tex $(INFORME)/LEEME.txt $(FIGURAS)
 	@mkdir -p $(dir $@)
 	rm -f $@
-	cd $(INFORME) && zip -qr ../$@ main.tex slides.tex LEEME.txt figuras Imagenes -x '*.gitkeep'
+	cd $(INFORME) && zip -qr ../$@ main.tex main.human.tex slides.tex LEEME.txt figuras Imagenes -x '*.gitkeep'
 	@echo "Listo: $@"
 
 limpiar:

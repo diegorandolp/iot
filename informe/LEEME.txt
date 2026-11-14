@@ -1,74 +1,96 @@
 Informe final (P2) y presentación
 =================================
 
-main.tex     Informe con plantilla ACM (acmart, formato manuscript).
-slides.tex   Presentación final en beamer, extendida desde la del perfil.
-figuras/     Diagramas y gráficos en TikZ/pgfplots, compartidos por los dos.
-Imagenes/    Fotos y capturas propias (por ahora vacía).
+main.human.tex  Informe que se entrega (plantilla ACM, formato manuscript), con el
+                estilo de escritura aplicado. Compila a main.human.pdf.
+main.tex        El mismo informe sin el estilo. Sirve para comparar.
+main.exemplars.json, main.slips.md
+                Registro del estilo: marcos de oración usados y deslices
+                deliberados (con su forma correcta).
+slides.tex      Presentación final en beamer.
+figuras/        Diagramas y gráficos en TikZ/pgfplots, compartidos por los dos.
+Imagenes/       Fotos y capturas propias.
 
 Compila en Overleaf con pdfLaTeX o XeLaTeX, o desde la carpeta raíz con
 "make" (ver README.md). "make zip" arma entregas/informe_overleaf.zip.
 
+El contenido sigue lo que hace el programa del ESP32 (esp32/), la app (app/)
+y las Lambdas y reglas de AWS (aws/). Si algo cambia en esos códigos, hay que
+actualizar también las tablas de pines, de eventos y de pruebas del informe.
 
-1. FOTOS Y CAPTURAS
+
+1. IMÁGENES
+-----------
+Todas las fotos y capturas están en Imagenes/:
+  prototipo.jpeg, compartimento.jpeg, puerta.jpeg, sw420.jpeg, servo.jpeg,
+  buzzer_sg90.jpeg   Armado del prototipo (informe y presentación).
+  app.png            Capturas de la app: estado, eventos y PIN (informe y presentación).
+  prueba.jpg         Sesión de prueba con la app abierta (informe y presentación).
+  video.jpg          Imagen del equipo con el prototipo (presentación).
+
+Si falta una imagen, el PDF dibuja un recuadro gris con su nombre en lugar de
+fallar. Basta con copiar el archivo con ese nombre exacto.
+
+
+2. ENLACE DEL VIDEO
 -------------------
-Mientras falte una imagen, el PDF dibuja un recuadro gris con su nombre.
-Basta con copiar el archivo en Imagenes/ con ese nombre exacto (respetar
-.jpg o .png). Si la foto es .png y el nombre dice .jpg, conviértanla o
-cambien el nombre en el .tex.
+El enlace va en una sola línea, \def\videourl{...}, que está en main.tex,
+main.human.tex y slides.tex (cerca de la línea 24). Hoy está vacía y por eso el
+informe omite la frase con el enlace y el código QR de la sección de mercado, y
+la presentación muestra solo la imagen. Al pegar el enlace, reaparecen la frase,
+el QR y el enlace en la lámina del video. Ejemplo:
 
-Archivo                    Dónde       Qué debe mostrar
-Imagenes/prototipo.jpg     informe+pres  Casa terminada, vista frontal, puerta cerrada.
-                                       Que se vean el domo del PIR y el copo del buzzer.
-Imagenes/compartimento.jpg informe+pres  Base abierta desde arriba: ESP32 en el shield, relé,
-                                       LM2596, protoboard y cables ordenados.
-Imagenes/puerta.jpg        informe+pres  Puerta abierta: reed del MC-38 sobre el marco e imán en la hoja.
-Imagenes/sw420.jpg         informe+pres  SW-420 pegado con silicona en la pared izquierda, por dentro.
-Imagenes/servo.jpg         informe+pres  Servo en el piso de la casa, con el pestillo trabando la puerta.
-Imagenes/lm2596.jpg        informe+pres  LM2596 con el multímetro marcando 5,0 V.
-Imagenes/app.png           informe+pres  Capturas de la app móvil lado a lado, en una sola imagen
-                                       horizontal: estado, historial y gráficos de métricas.
-Imagenes/prueba.jpg        presentación  Equipo probando un evento crítico, con la app abierta al lado.
-Imagenes/buzzer.jpg        presentación  Foto del buzzer SFM-20B suelto, fondo claro.
-Imagenes/sg90.jpg          presentación  Foto del servo SG90 suelto, fondo claro.
-Imagenes/video.jpg         presentación  Fotograma del video con los cuatro integrantes y el prototipo.
-
-Las fotos de figuras/fotos/ son referenciales de Wikimedia (créditos en las
-diapositivas). sirena.jpg y cerradura.jpg ya no se usan.
+  \def\videourl{https://...}
 
 
-2. DATOS DE LOS GRÁFICOS
-------------------------
-Los gráficos de latencia, RSSI y eventos leen figuras/datos/*.dat, que hoy
-tienen DATOS DE EJEMPLO (por eso llevan un sello rojo). Reemplácenlos con lo
-que registre el backend, con el mismo formato:
+3. LO QUE EL INFORME DICE QUE NO SE MIDIÓ
+-----------------------------------------
+El informe no tiene mediciones propias. Lo dice con claridad en los resultados,
+la discusión y las conclusiones:
+  - Latencia, pérdida de mensajes, disponibilidad, falsas alarmas y RSSI no se
+    midieron. Las seis métricas están definidas (Tabla "Métricas de desempeño"),
+    pero la Lambda que las calcula, la tabla del historial de latidos y la ruta
+    para marcar una alerta como falsa no existen todavía.
+  - La potencia de la Figura 13 es una estimación con hojas de datos. No se midió
+    con un medidor USB.
+  - Los resultados que sí tiene son las seis pruebas del backend en AWS y la
+    sesión de prueba del 13 de noviembre (Figuras 10 y 12), cuyo historial se
+    describe evento por evento.
+  - Los gráficos de latencia, RSSI y eventos con datos de ejemplo se quitaron.
+    Los archivos graf_latencia.tex, graf_rssi.tex, graf_eventos.tex y
+    figuras/datos/ siguen en la carpeta, sin usarse, por si más adelante hay
+    mediciones reales.
 
+Si más adelante hay mediciones, el formato de los datos es:
   latencia.dat   una latencia en ms por línea: timestamp que agrega la regla
-                 de IoT Core menos el ts_evento del ESP32
+                 de IoT Core menos el ts_evento del ESP32 (solo eventos que
+                 manda el ESP32, no los que escribe abrirPuerta)
   latidos.dat    minuto y RSSI de cada latido; "nan" si el latido no llegó
   eventos.dat    por sensor: activaciones y alertas marcadas como falsas
+El gráfico de costos usa los precios de la lista de materiales, salvo el buzzer
+(S/ 3) y el servo SG90 (S/ 12), que son estimados. El costo de AWS (unos US$ 1 al
+mes por nodo con la app abierta todo el día) es una estimación con tarifas
+públicas recordadas de memoria: contrástenla con AWS Pricing Calculator.
 
-Luego descomenten \datosdeejemplofalse en main.tex y en slides.tex.
 
-El gráfico de corriente usa la estimación de la hoja de cálculo y el de
-costos los precios de la lista de materiales. Esos no son de ejemplo.
+4. SUPUESTOS QUE SE TOMARON SIN CONFIRMAR
+-----------------------------------------
+Corríjanlos en el informe si no son así:
+  - El MQ-2 quedó montado y conectado al GPIO 34 con su divisor de 10 k / 20 k.
+  - El servo y el PIR toman sus 5 V del pin VIN del ESP32, sin capacitor extra.
+  - La fuente actual es el puerto USB de una laptop (0,5 A en USB 2.0).
+  - Las imágenes app.png, prueba.jpg y video.jpg muestran lo que dicen sus pies de
+    figura. Revisen que video.jpg sea un fotograma real antes de presentarla así.
 
-
-3. TEXTO PENDIENTE
-------------------
-Todo lo que está en rojo y entre corchetes falta completar o confirmar:
-cifras de resultados, la discusión, cómo se apaga el buzzer, los precios del
-buzzer y del servo, el costo mensual de AWS, y el enlace del video
-(\videourl en main.tex y slides.tex, que también genera el QR).
-Busquen "\pendiente" en los .tex.
-
-Del lado de AWS, el informe ya describe IoT Core, las reglas, DynamoDB, las
-Lambdas y API Gateway según la documentación del 11 de noviembre. Siguen
-marcados como pendientes:
-  - la prueba con el ESP32 real (pruebas funcionales 1 a 9),
-  - la tabla con el historial de latidos (hoy EstadoPuerta guarda solo el último),
-  - la Lambda de métricas con la ruta GET /metricas,
-  - la ruta para marcar una alerta como falsa.
+Diferencias entre el código y otros documentos, ya resueltas en el informe a
+favor del código:
+  - esp32/README.md todavía dice que el buzzer va por relé en el GPIO 23, que
+    el servo está en el GPIO 18 y que usa ArduinoJson. El programa usa el
+    GPIO 32 para el buzzer, el 13 para el servo y no usa ArduinoJson.
+  - La Lambda abrirPuerta manda duracion_ms = 3000, pero el programa lo ignora:
+    el pestillo se vuelve a trabar cuando el MC-38 ve la puerta abrirse y
+    cerrarse, o a los 60 s.
+  - La app no revisa GET /estado antes de abrir.
 
 El informe NO incluye el endpoint de IoT, la URL de la API ni el PIN. No los
 agreguen: el informe y las diapositivas se van a compartir.
