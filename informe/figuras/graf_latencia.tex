@@ -1,0 +1,15 @@
+% Histograma de latencias (ms) leído de figuras/datos/latencia.dat
+\begin{tikzpicture}
+\begin{axis}[grafico,
+  width=\anchografico, height=\altografico,
+  xmin=0, xmax=2200, ymin=0, xtick={0,500,1000,1500,2000},
+  enlarge y limits={upper, value=0.2},
+  xticklabel style={/pgf/number format/1000 sep={}},
+  xlabel={Latencia (ms)}, ylabel={Eventos}]
+  \addplot[ybar interval, hist={bins=22, data min=0, data max=2200}, fill=serie1, draw=white]
+    table[y=latencia_ms] {figuras/datos/latencia.dat};
+  \draw[dashed, black!60, thick] (axis cs:2000,0) -- ({axis cs:2000,0} |- {rel axis cs:0,1})
+    node[pos=0.55, left, font=\scriptsize, text=tinta, align=right] {Meta\\2\,s};
+  \marcaejemplo
+\end{axis}
+\end{tikzpicture}

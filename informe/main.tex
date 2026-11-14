@@ -1,0 +1,737 @@
+\documentclass[manuscript,screen,nonacm]{acmart}
+
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\fi
+\usepackage[spanish,es-tabla,es-noshorthands]{babel}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{adjustbox}
+\usepackage{listings}
+\usepackage{qrcode}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,calc,fit,babel}
+\usepackage{pgfplots}
+\usepgfplotslibrary{statistics}
+
+\input{figuras/estilos}
+
+% Cuando los archivos de figuras/datos/ tengan las mediciones reales:
+% \datosdeejemplofalse
+
+% Enlace del video publicitario (también genera el código QR)
+\newcommand{\videourl}{https://youtu.be/PENDIENTE}
+
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\lstset{basicstyle=\ttfamily\footnotesize, frame=single, rulecolor=\color{black!30},
+  columns=fullflexible, keepspaces=true, xleftmargin=2mm, xrightmargin=2mm}
+
+% ACM sin metadatos de publicación
+\settopmatter{printacmref=false, printccs=false}
+\authorsaddresses{}
+\renewcommand\keywordsname{Palabras clave}
+\captionsetup[figure]{name={Figura}}
+
+\begin{document}
+
+\title[Seguridad residencial IoT]{Sistema inteligente de seguridad residencial IoT con monitoreo inalámbrico y alertas en tiempo real}
+
+\author{Ariann Abigail Salcedo Quiroz}
+\affiliation{\institution{Universidad de Ingeniería y Tecnología}\city{Lima}\country{Perú}}
+\author{Diego Randolp Quispe Apaza}
+\affiliation{\institution{Universidad de Ingeniería y Tecnología}\city{Lima}\country{Perú}}
+\author{Federico Iribar Casanova}
+\affiliation{\institution{Universidad de Ingeniería y Tecnología}\city{Lima}\country{Perú}}
+\author{Sofia del Pilar Salazar Mendoza}
+\affiliation{\institution{Universidad de Ingeniería y Tecnología}\city{Lima}\country{Perú}}
+\renewcommand{\shortauthors}{Salcedo, Quispe, Iribar y Salazar}
+
+\begin{abstract}
+Presentamos un prototipo de seguridad residencial construido sobre un ESP32 y montado dentro de una casa de cartón a escala. Tres sensores vigilan la puerta (un PIR para el movimiento, un MC-38 para la apertura y un SW-420 para los golpes). Si dos sensores distintos se activan en menos de 10\,s, el ESP32 hace sonar un buzzer y traba la puerta con un pestillo movido por un servo, sin esperar a Internet, mientras que un solo sensor genera apenas una alerta leve. Cada evento viaja por MQTT sobre TLS hasta AWS IoT Core, donde dos reglas lo guardan en DynamoDB, y unas funciones Lambda atienden a la aplicación móvil a través de API Gateway. Desde esa aplicación se puede abrir la puerta con un PIN, y con los datos guardados se calculan seis métricas de desempeño (latencia, pérdida de mensajes, disponibilidad, eventos por sensor, falsas alarmas y calidad del enlace). Frente al perfil del proyecto, cambiamos la sirena y la cerradura de 12\,V por un buzzer y un servo, y con eso la corriente estimada en el peor caso bajó de 2,26\,A a unos 0,7\,A, dentro de lo que entrega la fuente de 2\,A. \pendiente{Agregar una oración con el resultado principal medido, por ejemplo la latencia p95 y la disponibilidad.}
+\end{abstract}
+
+\keywords{Internet de las cosas, seguridad residencial, ESP32, MQTT, AWS IoT Core, detección de intrusos, computación en el borde}
+
+\maketitle
+
+%=================================================================
+\section{Introducción}
+\label{sec:introduccion}
+
+En una ciudad como Lima, una vivienda suele protegerse con piezas que no se comunican entre sí: una cerradura, una alarma independiente y, con suerte, una cámara. Cada una trabaja por su cuenta, así que la casa tarda en notar un evento de riesgo y casi nunca reacciona sola, sin que alguien intervenga.
+
+Eso empezó a cambiar con los microcontroladores baratos que traen Wi-Fi. Hoy un chip de pocos dólares puede leer varios sensores, procesar sus datos en el mismo dispositivo y mandar el resultado a una interfaz en tiempo real \cite{alfuqaha2015survey, oktafiani2025esp32}. Sobre esa base construimos un prototipo de seguridad residencial alrededor de un ESP32. Tres sensores (presencia, apertura y vibración) alimentan una lógica que relaciona eventos cercanos en el tiempo y decide el nivel de riesgo. Si el evento es crítico, suena un buzzer y un servo traba la puerta con un pestillo. Todo se reporta por Wi-Fi a servicios de AWS, y una aplicación móvil muestra las alertas, permite abrir la puerta con un PIN y presenta métricas sobre el funcionamiento del propio sistema. El hardware va escondido dentro de una casa navideña de cartón reciclado, pensada como maqueta para demostrar el sistema en clase.
+
+Las Secciones~\ref{sec:problematica} y~\ref{sec:marco-teorico} presentan el problema, los objetivos y la teoría necesaria. La Sección~\ref{sec:estado-arte} analiza ocho trabajos recientes, y la Sección~\ref{sec:metodologia} explica el diseño. Después vienen la implementación (Sección~\ref{sec:implementacion}), los resultados (Sección~\ref{sec:resultados}), el mercado (Sección~\ref{sec:mercado}) y las conclusiones (Sección~\ref{sec:conclusiones}).
+
+%=================================================================
+\section{Problemática}
+\label{sec:problematica}
+
+Una intrusión puede empezar de varias maneras. Alguien abre una puerta o una ventana sin autorización. Otras veces hay movimiento en una zona que debería estar vacía, o golpes contra una estructura que alguien intenta forzar. Una cerradura, una alarma puntual o una cámara aislada detecta, en el mejor caso, uno de esos eventos, y no tiene forma de relacionarlo con los demás. Esa desconexión cuesta los primeros segundos, que son justamente el intervalo en el que todavía se puede disuadir al intruso o alertar a quienes están dentro. Por eso los sistemas recientes combinan PIR y contactos magnéticos para disparar la alerta apenas empieza el acceso no autorizado \cite{arinde2024multisensor}.
+
+El precio empeora las cosas. Los sistemas comerciales de gama media y alta quedan fuera del alcance de un hogar promedio, y las opciones baratas suelen traer un solo tipo de sensor, sin correlación de eventos ni aviso remoto. La tecnología para hacerlo mejor ya es barata, y en una revisión de diez sistemas domésticos basados en ESP32 todos lograron notificar en tiempo real, casi siempre por Telegram o por una página web \cite{oktafiani2025esp32}.
+
+Hay un tercer problema, menos visible. El dueño de una alarma barata rara vez sabe si funciona bien. No sabe cuántas alertas fueron falsas ni cuánto tardó en llegar un aviso, y tampoco sabe si el equipo estuvo desconectado la noche anterior.
+
+Proponemos un sistema integrado y de bajo costo para cubrir ese hueco. El sistema debe detectar distintos eventos de riesgo con varios sensores y clasificarlos en un microcontrolador. Ante un evento crítico tiene que responder solo, con una alarma sonora y un bloqueo, y avisar en tiempo real a una interfaz que mida su propio desempeño. Combinar las señales de varios sensores también ayuda a mantener acotadas las falsas alarmas \cite{pugh2015fusion}. Como la decisión se toma en el microcontrolador, la respuesta local no depende de Internet.
+
+\subsection{Objetivos}
+
+El objetivo general es diseñar e implementar un sistema inteligente de seguridad residencial IoT que detecte intrusiones con tres sensores, clasifique el riesgo en un ESP32, responda con una alarma sonora y un bloqueo por servo, y avise por Wi-Fi a una aplicación móvil que mida su propio desempeño y permita abrir la puerta con un PIN. Los objetivos específicos son los siguientes:
+\begin{itemize}
+  \item Detectar movimiento, apertura y vibración con los sensores PIR, MC-38 y SW-420.
+  \item Clasificar cada evento como leve o crítico según si dos sensores distintos se activan dentro de una ventana de 10\,s.
+  \item Activar la alarma sonora y el bloqueo por servo ante todo evento crítico, sin depender de la conexión a Internet.
+  \item Publicar los eventos por MQTT hacia AWS IoT Core, con una latencia menor a 2\,s en el percentil 95.
+  \item Desarrollar una aplicación móvil que muestre eventos y estado, abra la puerta con un PIN y presente seis métricas de desempeño calculadas en AWS.
+  \item Montar el hardware dentro de una casa de cartón reciclado, sin cables a la vista.
+  \item (Opcional) Agregar una ESP32-CAM y un sensor de humo MQ-2.
+\end{itemize}
+
+%=================================================================
+\section{Marco teórico}
+\label{sec:marco-teorico}
+
+\subsection{Internet de las cosas y arquitectura por capas}
+El Internet de las cosas (IoT) es una red de objetos físicos, como sensores, actuadores y dispositivos embebidos, que recogen datos y los transmiten por Internet sin intervención humana directa \cite{alfuqaha2015survey}. De los varios modelos de arquitectura que existen, los más citados tienen tres o cinco capas, y en su versión mínima separan una capa de percepción, una capa de red que transporta los datos y una capa de aplicación donde esos datos se procesan, se guardan y se visualizan \cite{alfuqaha2015survey, ray2018survey}. La Figura~\ref{fig:capas} ubica cada parte del prototipo en ese esquema de tres capas.
+
+\begin{figure}[htbp]
+\centering
+\input{figuras/capas}
+\caption{Capas de una arquitectura IoT (izquierda) y la parte del prototipo que ocupa cada una (derecha).}
+\label{fig:capas}
+\end{figure}
+
+\subsection{Sensores}
+El sensor PIR (\emph{passive infrared}) capta la radiación infrarroja que emite un cuerpo humano al moverse dentro de su campo de visión y responde con una salida digital. Es barato y consume poco, por eso aparece en 7 de cada 10 sistemas de seguridad con ESP32 revisados por Oktafiani y Widhiantoro \cite{oktafiani2025esp32}. El sensor magnético tiene dos piezas, un imán y un interruptor de láminas (\emph{reed switch}). Cuando se separan, como pasa al abrir una puerta, el circuito cambia de estado y el sistema registra la apertura. El sensor de vibración SW-420 reacciona a golpes sobre la superficie donde está montado, así que sirve para notar que alguien intenta forzar la puerta.
+
+\subsection{Microcontrolador ESP32}
+El ESP32 es un microcontrolador de bajo costo con Wi-Fi y Bluetooth integrados, además de varias entradas y salidas digitales y analógicas. Su capacidad de cómputo alcanza para leer sensores, tomar decisiones y transmitir eventos en tiempo real. Por eso es una de las plataformas más usadas en proyectos de seguridad residencial con IoT \cite{oktafiani2025esp32, nannung2025iot}.
+
+\subsection{Comunicación inalámbrica y MQTT}
+MQTT (\emph{Message Queuing Telemetry Transport}) es un protocolo de publicación y suscripción pensado para dispositivos con pocos recursos \cite{alfuqaha2015survey, light2017mosquitto}. Cada dispositivo publica mensajes cortos en un \emph{tópico}, por ejemplo \texttt{casa/puerta/eventos}, y un intermediario llamado \emph{broker} los reenvía a quienes estén suscritos. La cabecera mínima ocupa apenas 2 bytes, y sobre TLS el mismo protocolo viaja cifrado por el puerto 8883. El broker puede ser un programa que uno instala en su propio servidor, como Mosquitto \cite{light2017mosquitto}, o un servicio administrado como AWS IoT Core. Este último, además de reenviar mensajes, lleva un registro de los dispositivos, los autentica con certificados X.509 en lugar de contraseñas y tiene un motor de reglas que guarda los mensajes sin escribir código \cite{aws2026iot}.
+
+\subsection{Procesamiento en el borde y en la nube}
+En la nube, los mensajes que llegan al broker se guardan y se procesan antes de mostrarlos. Con servicios sin servidor, como AWS Lambda, ese procesamiento corre en funciones cortas que se ejecutan cuando llega una solicitud, sin una máquina propia que haya que administrar \cite{aws2026lambda}. El procesamiento previo convierte eventos sueltos en indicadores, como la latencia promedio de una alerta o el porcentaje de tiempo que el nodo estuvo conectado. Así el usuario puede comprobar que el sistema cumple lo que promete, además de ver qué pasó. Las decisiones urgentes, en cambio, se quedan fuera de la nube, porque tomarlas en el borde de la red, cerca de los sensores, evita depender de la latencia o de la conexión a Internet \cite{shi2016edge}.
+
+\subsection{Actuadores y alimentación}
+El actuador principal es un buzzer activo, que a diferencia de un parlante trae su propio oscilador y suena apenas recibe tensión continua, así que basta un relé para encenderlo. El relé es un interruptor movido por una bobina, y permite que una señal de 3,3\,V del ESP32 conmute la línea de 12\,V del buzzer sin que las dos tensiones se mezclen. El bloqueo usa un servo SG90, un motor pequeño que gira a un ángulo fijo según el ancho de un pulso PWM. En el prototipo ese giro mueve un pestillo que traba la puerta.
+
+Todo el circuito se alimenta de una sola fuente de 12\,V, y un convertidor reductor LM2596 baja esa tensión a 5,0\,V para el ESP32, el PIR, el módulo de relés y el servo. Cuando el servo arranca pide un pico de corriente, y un capacitor de 1000\,\textmu F en su alimentación evita que ese pico haga caer el riel de 5\,V y reinicie el ESP32.
+
+\subsection{Detección de intrusos por correlación de eventos}
+La detección de intrusos con redes de sensores inalámbricos reparte nodos por el ambiente y reporta a una estación base solo lo que parece anormal \cite{walchli2009building}. Fusionar las señales de varios sensores permite fijar de antemano cuántas falsas alarmas se toleran \cite{pugh2015fusion}. La parte ``inteligente'' del prototipo sale de esa idea. Un solo sensor activado genera una alerta leve, y dos sensores distintos dentro de una misma ventana de tiempo elevan el evento a crítico. La intensidad de la señal Wi-Fi (RSSI) también aparece en este campo, porque una persona que se mueve altera la señal entre dos equipos, y con esa variación Jin et al. detectaron intrusos en una vivienda real \cite{jin2018wlid}. Nosotros usamos el RSSI de forma más simple, como indicador de la calidad del enlace del ESP32.
+
+%=================================================================
+\section{Estado del arte}
+\label{sec:estado-arte}
+
+Cada integrante revisó dos trabajos publicados entre 2020 y 2026, entre sistemas de seguridad con ESP32, estudios sobre MQTT y propuestas que detectan intrusos con otras señales. La Tabla~\ref{tab:comparacion} resume los sistemas revisados frente a nuestro prototipo.
+
+\subsection{Revisado por Ariann Abigail Salcedo Quiroz}
+Nannung et al. \cite{nannung2025iot} armaron un prototipo de seguridad residencial sobre un ESP32-CAM que reconoce rostros con Haar Cascade y LBPH y vigila temperatura, humedad y gases con los sensores DHT22 y MQ-2. Si el rostro está registrado, un relé abre una cerradura solenoide, y si no lo está, la puerta sigue trabada. El reconocimiento facial llegó a 95,31\,\% de precisión. El sistema también detectó temperaturas sobre 40\,°C y concentraciones de gas por encima de 300\,ppm, y avisó por Telegram. De este trabajo tomamos el uso de un relé para conectar la respuesta física. Su sistema no mide si los avisos llegan ni cuánto tardan, y ese es el hueco que cubren nuestras métricas.
+
+Oktafiani y Widhiantoro \cite{oktafiani2025esp32} revisaron diez artículos sobre sistemas de seguridad doméstica con ESP32. El PIR ganó con claridad, ya que apareció en 7 de ellos, frente a 3 con el sensor de gas MQ-2 y apenas 2 con ESP32-CAM. En todos los casos el sistema detectó la amenaza y avisó en tiempo real, casi la mitad por Telegram (45,45\,\%), un poco más de un tercio por una página web (36,36\,\%) y el resto con la aplicación Blynk (18,18\,\%). Esa distribución nos llevó a poner el PIR entre los sensores principales y a construir una aplicación propia en lugar de depender de Telegram o Blynk.
+
+\subsection{Revisado por Diego Randolp Quispe Apaza}
+Aprilia y Purwanto \cite{aprilia2025boarding} protegieron un cuarto alquilado con un PIR HC-SR501, una ESP32-CAM que toma una foto y un buzzer activo como alarma local, y enviaron las alertas por Telegram. Hicieron cinco pruebas por distancia, de 1 a 6\,m. El PIR acertó el 100\,\% de las veces entre 1 y 3\,m, bajó a 80\,\% a los 4\,m y a 40\,\% a los 5\,m. La foto llegaba a Telegram en 8 a 9\,s en promedio y la confiabilidad de los avisos fue de 95\,\%. Es el trabajo más parecido al nuestro en hardware, con el mismo PIR y el mismo tipo de buzzer. Sus resultados nos sirvieron para dos cosas. Primero, para poner el PIR cerca de la puerta, dentro del rango en que acertó todas las veces en sus pruebas. Segundo, para medir el tiempo de aviso como una métrica más, con una meta más exigente que la suya (2\,s frente a 10\,s).
+
+Jama et al. \cite{jama2026edge} evaluaron una arquitectura de dos capas para el control de acceso de una casa. Un ESP32 con lectores RFID y biométricos decide en el borde y se comunica con la nube por MQTT. En 14 días y 50 ciclos de autenticación lograron 98,0\,\% de exactitud, una tasa de falsa aceptación de 0,00\,\% y una de falso rechazo de 2,86\,\%. La respuesta local tomó 1161,60\,ms en promedio, y el control de acceso siguió funcionando durante cortes de red simulados. Ese resultado respalda nuestra decisión de que el ESP32 active la alarma y el bloqueo por su cuenta y deje a la nube el registro, las métricas y la apertura a distancia.
+
+\subsection{Revisado por Federico Iribar Casanova}
+Mishra y Kertesz \cite{mishra2020mqtt} estudiaron cómo creció la investigación sobre MQTT, AMQP y CoAP en veinte años y encontraron que MQTT crece más rápido que los otros dos. Además comparan las ventajas y límites del protocolo y proponen una taxonomía de brokers y librerías cliente para ayudar a elegir según los requisitos de cada proyecto. Usamos esa comparación para justificar MQTT frente a CoAP en un nodo que solo manda mensajes cortos y necesita recibir órdenes.
+
+Bender et al. \cite{bender2021mqtt} midieron seis implementaciones abiertas de MQTT (Mosquitto, HiveMQ, EMQX, VerneMQ, MQTT.js y Paho) con un marco de pruebas propio. Revisaron interoperabilidad, consumo de recursos y latencia, y encontraron que las implementaciones principales cumplen el estándar y pueden trabajar juntas. El lenguaje en que están escritas pesa mucho en el consumo de recursos, y en redes con pérdidas la latencia cambia de una implementación a otra. En el perfil habíamos previsto Mosquitto en una instancia EC2, y al final usamos AWS IoT Core, un broker administrado que evita mantener un servidor propio. De este trabajo nos quedaron dos ideas. Como las implementaciones principales cumplen el estándar, el ESP32 usa un cliente MQTT común y podría conectarse a otro broker cambiando solo la dirección y las credenciales. Y como la latencia cambia de una implementación a otra, hay que medirla en nuestro propio enlace en vez de suponerla.
+
+\subsection{Revisado por Sofia del Pilar Salazar Mendoza}
+Zhuang et al. \cite{zhuang2021intrusion} detectan intrusos sin instalar sensores en la zona vigilada. Analizan la información del estado del canal (CSI) de equipos Wi-Fi comerciales y aprovechan que las subportadoras OFDM vecinas cambian de forma parecida cuando alguien se mueve. Probaron el sistema en viviendas reales con distintas velocidades de movimiento, varios intrusos, obstáculos entre los equipos e incluso personas durmiendo, y el desempeño se mantuvo alto en todos esos casos. Su enfoque no reemplaza a nuestros sensores, porque necesita equipos con acceso a la CSI. Lo vemos como una mejora futura, y por ahora solo usamos el RSSI del ESP32 como medida de la calidad del enlace.
+
+Arinde e Idowu \cite{arinde2024multisensor} construyeron un sistema de detección de intrusos para casas y oficinas con un sensor PIR, interruptores magnéticos y un módulo GSM, controlados por un ATmega328P. Ante una intrusión, el sistema llama por teléfono al propietario. Es la combinación de sensores más cercana a la nuestra. En nuestro caso la alerta viaja por Wi-Fi, y cada evento termina alimentando métricas de desempeño que ellos no calculan.
+
+\subsection{Síntesis}
+La Tabla~\ref{tab:comparacion} deja ver un patrón. Casi todos los sistemas combinan un PIR con algún otro sensor y avisan por Wi-Fi o GSM, y la mayoría tiene alguna respuesta local. Ninguno de los trabajos describe una regla que exija la coincidencia de dos sensores distintos antes de disparar la alarma. Varios miden la exactitud de la detección, y solo Jama et al. \cite{jama2026edge} y Aprilia y Purwanto \cite{aprilia2025boarding} miden cuánto tarda la respuesta o el aviso. Nuestro prototipo junta la correlación de sensores y la medición del propio desempeño en un equipo barato.
+
+\begin{table}[htbp]
+\centering
+\caption{Sistemas revisados frente al prototipo}
+\label{tab:comparacion}
+\footnotesize
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}L{2.5cm}L{3.1cm}L{1.8cm}L{2.7cm}L{2.8cm}@{}}
+\toprule
+\textbf{Trabajo} & \textbf{Sensores} & \textbf{Enlace} & \textbf{Respuesta local} & \textbf{Mide su desempeño} \\
+\midrule
+Nannung et al. \cite{nannung2025iot} & Cámara, DHT22, MQ-2 & Wi-Fi & Relé y cerradura & Precisión facial \\
+Aprilia y Purwanto \cite{aprilia2025boarding} & PIR, cámara & Wi-Fi & Buzzer & Acierto y tiempo de aviso \\
+Jama et al. \cite{jama2026edge} & RFID, biométrico & Wi-Fi, MQTT & Acceso sin nube & Exactitud y latencia \\
+Arinde e Idowu \cite{arinde2024multisensor} & PIR, magnético & GSM & Llamada & No \\
+Zhuang et al. \cite{zhuang2021intrusion} & CSI de Wi-Fi & Wi-Fi & No & Tasa de detección \\
+\midrule
+\textbf{Este trabajo} & PIR, MC-38, SW-420, correlacionados & Wi-Fi, MQTT/TLS & Buzzer y pestillo & 6 métricas \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%=================================================================
+\section{Metodología y desarrollo del proyecto}
+\label{sec:metodologia}
+
+\subsection{Cambios respecto al perfil}
+Después del perfil (P1) ajustamos el hardware para que entrara en una maqueta y gastara menos energía, y rehicimos la parte en la nube, con los cambios que resume la Tabla~\ref{tab:cambios}. Los tres sensores, el ESP32, la regla de 10\,s, MQTT con TLS y las seis métricas siguen igual. En la nube, el servidor EC2 con Mosquitto, FastAPI y SQLite dio paso a servicios administrados de AWS, que no hay que instalar ni mantener encendidos. La aplicación pasó de web a móvil y ganó un botón para abrir la puerta con un PIN. En el hardware, el cambio con más efecto fue el de los actuadores. La sirena de 15\,W y la cerradura solenoide podían pedir juntas 2,26\,A y pasaban el límite de la fuente de 2\,A, mientras que con el buzzer y el servo el peor caso estimado queda en unos 0,7\,A.
+
+\begin{table}[htbp]
+\centering
+\caption{Cambios entre el perfil (P1) y la versión final}
+\label{tab:cambios}
+\footnotesize
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}L{2.1cm}L{3.4cm}L{3.6cm}L{3.6cm}@{}}
+\toprule
+\textbf{Aspecto} & \textbf{Perfil P1} & \textbf{Versión final} & \textbf{Motivo} \\
+\midrule
+Zona de prueba & Puerta de MDF o puerta real & Casa navideña de cartón a escala & Es una demostración en aula \\
+Alarma & Sirena de 12\,V y 15\,W & Buzzer activo SFM-20B a 12\,V & Tamaño y uso en aula \\
+Bloqueo & Cerradura solenoide de 12\,V & Servo SG90 con pestillo & Cabe en la casa y consume menos \\
+Conexiones & Placa perforada y borneras & Shield de borneras y protoboard & Más simple, sin PCB \\
+Carcasa & Impresión 3D en PLA & Cartón reciclado, armado a mano & Se arma más rápido, a tiempo para la entrega \\
+Fijación & Tornillos y tarugos & Silicona y cinta doble contacto, ocultas & Menos materiales \\
+Broker MQTT & Mosquitto en una instancia EC2 & AWS IoT Core & Sin servidor que mantener \\
+Backend & FastAPI y SQLite en Docker & Lambda, DynamoDB y API Gateway & Se paga por uso \\
+Autenticación & Usuario y contraseña & Certificado X.509 del ESP32 & Ninguna contraseña viaja por la red \\
+Apertura & Lector de huella opcional, junto a la puerta & PIN desde la aplicación & No suma hardware \\
+Aplicación & Web, desde el navegador & Móvil & \pendiente{completar} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Componentes y especificaciones técnicas}
+La Tabla~\ref{tab:componentes} agrupa los componentes por capa y muestra que el prototipo cumple los mínimos del curso, con tres sensores, dos actuadores, comunicación inalámbrica, una interfaz con procesamiento previo y una carcasa de material reciclado. La ESP32-CAM y el sensor MQ-2 quedan como opcionales y solo entran si el núcleo funciona.
+
+\begin{table}[htbp]
+\centering
+\caption{Componentes del prototipo y especificaciones}
+\label{tab:componentes}
+\footnotesize
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}L{3.6cm}L{9.4cm}@{}}
+\toprule
+\textbf{Componente} & \textbf{Especificaciones y función} \\
+\midrule
+\multicolumn{2}{@{}l}{\textit{Sensores}} \\
+PIR HC-SR501 & 4,5 a 20\,V, salida digital de 3,3\,V. Alcance ajustable de 3 a 7\,m, cono de unos 110°. Detecta movimiento. \\
+Magnético MC-38 & Contacto seco con imán. Se lee con el pull-up interno del ESP32. Detecta la apertura de la puerta. \\
+Vibración SW-420 & Comparador LM393 con salida digital y sensibilidad ajustable. Alimentado a 3,3\,V. Detecta golpes. \\
+\midrule
+\multicolumn{2}{@{}l}{\textit{Procesamiento y comunicación}} \\
+ESP32 DevKit V1 (ESP-WROOM-32) & Doble núcleo a 240\,MHz, 520\,KB de SRAM, 4\,MB de flash. Wi-Fi 802.11 b/g/n a 2,4\,GHz y Bluetooth 4.2. Lógica de 3,3\,V. \\
+\midrule
+\multicolumn{2}{@{}l}{\textit{Actuación}} \\
+Módulo de relés de 2 canales & Bobina de 5\,V con optoacoplador, jumper de activación en H. CH1 conmuta el buzzer y CH2 queda libre. \\
+Buzzer activo SFM-20B & Funciona de 3 a 24\,V. Va a 12\,V a través del relé. Alarma sonora. \\
+Servo SG90 & 5\,V, giro de 0 a 180° controlado por PWM. Mueve el pestillo de bloqueo. \\
+\midrule
+\multicolumn{2}{@{}l}{\textit{Alimentación y conexiones}} \\
+Fuente de 12\,V y 2\,A con jack DC & Única entrada de energía del prototipo. \\
+Convertidor LM2596 & Entrada de 4,5 a 35\,V, salida ajustable, hasta 3\,A. Ajustado a 5,0\,V con multímetro. \\
+Capacitor de 1000\,\textmu F y 25\,V & En la alimentación del servo. Amortigua las caídas de 5\,V cuando el servo arranca. \\
+Shield de borneras, protoboard y cables Dupont & Conexiones firmes para la demostración y reparto de 5\,V y GND. \\
+\midrule
+\multicolumn{2}{@{}l}{\textit{Carcasa, nube e interfaz}} \\
+Casa de cartón reciclado & Base de 172 × 172 × 42\,mm que oculta la electrónica y casa de 100 × 100 × 60\,mm con techo desmontable. \\
+AWS IoT Core & Broker MQTT administrado (TLS, puerto 8883). Registra el ESP32 como un objeto, lo autentica con un certificado X.509 y guarda sus mensajes en DynamoDB mediante dos reglas. \\
+Amazon DynamoDB & Dos tablas en modo bajo demanda, una con el historial de eventos y otra con el último estado de la puerta. \\
+AWS Lambda (Python 3.13) & \texttt{abrirPuerta} valida el PIN y envía la orden de abrir. \texttt{consultarPuerta} responde el historial y el estado. \\
+Amazon API Gateway & API HTTP con tres rutas (\texttt{POST /abrir}, \texttt{GET /eventos} y \texttt{GET /estado}), limitada a 5 solicitudes por segundo. \\
+Aplicación móvil propia & Estado de la puerta y del nodo, historial de eventos, botón para abrir con PIN y las métricas de la Tabla~\ref{tab:metricas}. \\
+\midrule
+\multicolumn{2}{@{}l}{\textit{Opcionales}} \\
+ESP32-CAM (OV2640) & Cámara de 2\,MP. Tomaría una foto en cada evento crítico. \\
+Sensor de humo MQ-2 & Salida analógica de hasta unos 4\,V. Necesita un divisor de 10\,k$\Omega$ y 20\,k$\Omega$ y un pin del ADC1. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Microcontrolador seleccionado}
+Elegimos el ESP32 como nodo central porque trae Wi-Fi integrado, tiene entradas digitales de sobra para los sensores y cuesta poco (S/~40 en una tienda peruana). Su reloj se sincroniza por NTP, así que cada evento sale marcado con la hora exacta en que ocurrió. Con esa marca se calcula después cuánto tardó el mensaje en llegar a AWS. La hora correcta también hace falta para la conexión TLS, porque sin ella el ESP32 no puede validar los certificados.
+
+\subsection{Diagrama de bloques}
+En la Figura~\ref{fig:bloques} está el sistema completo, con los tres sensores entrando al ESP32, que decide localmente siguiendo la división entre borde y nube de Shi et al. \cite{shi2016edge}. Si hace falta, activa el buzzer a través del relé y mueve el servo, y en paralelo publica cada evento por MQTT sobre Wi-Fi. La fuente de 12\,V alimenta el buzzer, y el LM2596 baja esa tensión a 5\,V para el resto del circuito. En la nube, AWS IoT Core recibe los mensajes y dos reglas los guardan en DynamoDB. La aplicación móvil nunca habla con IoT Core. Le pide los datos a API Gateway, que llama a funciones Lambda, y una de ellas también le envía al ESP32 la orden de abrir la puerta.
+
+\begin{figure}[htbp]
+\centering
+\adjustbox{max width=\linewidth}{\input{figuras/bloques}}
+\caption{Diagrama de bloques del sistema. Azul: sensores; naranja: procesamiento local; verde: actuación; gris: energía; morado: nube e interfaz.}
+\label{fig:bloques}
+\end{figure}
+
+\subsection{Del estado del arte al diseño}
+La Figura~\ref{fig:aportes} conecta los trabajos de la Sección~\ref{sec:estado-arte} con las cinco etapas del prototipo. Arriba de cada etapa aparece el trabajo que la inspiró y abajo lo que agregamos nosotros. Tomamos de los trabajos revisados la pareja PIR y sensor magnético, la decisión en el borde, el relé como interfaz con el actuador y MQTT como transporte. Lo nuevo está en tres puntos: la alarma exige que coincidan dos sensores, el pestillo solo se mueve con la puerta cerrada y el sistema mide su propio desempeño con seis métricas.
+
+\begin{figure}[htbp]
+\centering
+\adjustbox{max width=\linewidth}{\input{figuras/aportes}}
+\caption{Aportes del estado del arte a cada etapa del prototipo (fila superior) y lo que agrega este proyecto (fila inferior).}
+\label{fig:aportes}
+\end{figure}
+
+La regla de correlación es el centro del diseño, y la Figura~\ref{fig:ventana} la explica con dos casos. En el primero, un golpe en la puerta y su apertura llegan con 5\,s de diferencia. Los dos caen en la misma ventana de 10\,s y el evento se vuelve crítico. En el segundo, el PIR y la apertura están separados por 13\,s, así que cada uno queda como una alerta leve. Pugh et al. \cite{pugh2015fusion} fijan el límite de falsas alarmas con un modelo estadístico, y nuestra ventana es una versión mucho más simple de esa misma idea, pensada para correr en un microcontrolador.
+
+\begin{figure}[htbp]
+\centering
+\adjustbox{max width=\linewidth}{\input{figuras/ventana}}
+\caption{Ventana de correlación de 10\,s. Dos sensores distintos dentro de la ventana forman un evento crítico (caso 1). Si están más separados, cada uno es una alerta leve (caso 2).}
+\label{fig:ventana}
+\end{figure}
+
+\subsection{Lógica de detección}
+El ESP32 lee los tres sensores en un ciclo continuo y, cuando uno se activa, revisa si otro sensor distinto se activó en los últimos 10\,s. Si no encuentra ninguno, publica una alerta leve y no enciende nada. Si encuentra uno, el evento es crítico, suena el buzzer y se cierra el pestillo. Cada mensaje lleva el tipo de evento, el nivel, un texto corto, un número de secuencia y la hora NTP. Cada 30\,s, y también cuando la puerta se abre o se cierra, sale además un latido con el estado de la puerta y el RSSI.
+
+El servo trajo una regla nueva. El pestillo solo se mueve si el MC-38 indica que la puerta está cerrada. Con la puerta abierta, el bloqueo queda pendiente hasta que se cierre, para que el pestillo no choque contra la hoja.
+
+La puerta también se abre desde la aplicación. Quien conoce el PIN pulsa abrir, la Lambda \texttt{abrirPuerta} revisa el PIN y, si es correcto, envía la orden al ESP32 por el tópico \texttt{casa/puerta/comandos}. El ESP32 suelta el pestillo durante 3\,s y lo vuelve a trabar, y mientras dura esa apertura autorizada el MC-38 no cuenta como intrusión. Si la puerta se abre sin una orden previa, el ESP32 lo reporta como puerta forzada. Un PIN incorrecto no mueve nada y queda registrado como advertencia. La Tabla~\ref{tab:eventos} reúne todos los tipos de evento que se guardan. \pendiente{Definir cómo se apaga el buzzer después de un evento crítico, por ejemplo con el mismo PIN desde la aplicación.}
+
+\begin{table}[htbp]
+\centering
+\caption{Tipos de evento que guarda el sistema}
+\label{tab:eventos}
+\footnotesize
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}lL{3.4cm}L{4.4cm}@{}}
+\toprule
+\textbf{Tipo} & \textbf{Nivel} & \textbf{Origen} \\
+\midrule
+\texttt{vibracion} & Leve o crítico & ESP32 (SW-420) \\
+\texttt{movimiento} & Leve o crítico & ESP32 (PIR) \\
+\texttt{puerta\_forzada} & Leve o crítico & ESP32 (MC-38, sin orden previa) \\
+\texttt{humo} & Siempre crítico & ESP32 (MQ-2, opcional) \\
+\texttt{pin\_incorrecto} & Advertencia & AWS (\texttt{abrirPuerta}) \\
+\texttt{apertura} & Informativo & AWS (\texttt{abrirPuerta}) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Interfaz y procesamiento previo}
+Dos reglas de IoT Core guardan cada mensaje en DynamoDB sin código propio y le agregan la hora en que llegó. La aplicación consulta el estado y el historial cada 10 a 30\,s a través de API Gateway. La Lambda \texttt{consultarPuerta} ya hace un primer procesamiento, porque marca el nodo como desconectado si no llegó ningún mensaje suyo en los últimos 2 minutos. Las métricas de la Tabla~\ref{tab:metricas} se calcularán en otra Lambda, expuesta en una ruta \texttt{GET /metricas}, a partir del historial de eventos y de latidos. \pendiente{Falta crear la tabla con el historial de latidos, la Lambda de métricas y la ruta para marcar falsas alarmas. Hoy la tabla de estado solo guarda el último latido.} La vista principal muestra si la puerta está abierta o cerrada y si el nodo está conectado. Debajo están el historial de eventos, el botón para abrir con PIN y un gráfico por métrica. Cada alerta tiene un botón para marcarla como falsa, y esas marcas alimentan la tasa de falsas alarmas.
+
+\begin{table}[htbp]
+\centering
+\caption{Métricas calculadas en AWS}
+\label{tab:metricas}
+\footnotesize
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}L{3.2cm}L{9.8cm}@{}}
+\toprule
+\textbf{Métrica} & \textbf{Cálculo} \\
+\midrule
+Latencia de alerta & Hora de recepción en IoT Core, que agrega la regla, menos la hora del evento en el ESP32 (NTP). Promedio y percentil 95. \\
+Pérdida de mensajes & Huecos en el número de secuencia sobre el total esperado, en \%. \\
+Disponibilidad del nodo & Latidos recibidos sobre latidos esperados (uno cada 30\,s), en \%. \\
+Eventos por sensor & Conteo por sensor y por hora. Revela sensores ruidosos o mal calibrados. \\
+Tasa de falsas alarmas & Alertas marcadas como falsas por el usuario sobre el total de alertas. \\
+Calidad del enlace & RSSI promedio del Wi-Fi reportado en cada latido, en dBm. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Alcances y limitaciones}
+El prototipo protege una sola puerta a escala, con un PIR, un sensor magnético y un sensor de vibración. Incluye un nodo ESP32, el buzzer, el bloqueo por servo, el backend en AWS y la aplicación móvil, mientras que la ESP32-CAM y el MQ-2 quedan como opcionales.
+
+Es una maqueta demostrativa y no reemplaza a un sistema profesional. Sus límites concretos son los siguientes:
+\begin{itemize}
+  \item El servo y el pestillo de cartón no resisten una fuerza real, y el buzzer no equivale a una sirena comercial.
+  \item Cubre una zona con un solo nodo, que necesita una red Wi-Fi de 2,4\,GHz.
+  \item Si se cae Internet, la alarma y el bloqueo siguen funcionando, aunque la aplicación deja de recibir eventos y la caída se ve como una baja en la disponibilidad.
+  \item No tiene batería de respaldo, así que un corte de luz apaga el sistema.
+  \item MQTT va cifrado con TLS y el ESP32 se autentica con su certificado, aunque el prototipo no contempla sabotaje del cableado ni interferencia de radio.
+  \item La API no pide inicio de sesión, así que cualquiera con la URL puede leer los eventos. Abrir la puerta depende solo del PIN y del límite de 5 solicitudes por segundo.
+  \item Si el ESP32 está desconectado, la orden de abrir se pierde aunque la API responda con éxito, por eso la aplicación consulta el estado antes de abrir.
+  \item La red Wi-Fi de la universidad pide iniciar sesión en una página web, cosa que el ESP32 no puede hacer, así que la demostración usará el punto de acceso de un celular.
+\end{itemize}
+
+%=================================================================
+\section{Implementación}
+\label{sec:implementacion}
+
+\subsection{Interconexiones}
+La Figura~\ref{fig:conexiones} muestra qué pin del ESP32 va a cada módulo, y la Tabla~\ref{tab:pines} lo resume. Escogimos pines que no interfieren con el arranque, así que dejamos libres los GPIO 6 a 11, conectados a la memoria flash, y los GPIO 0, 2, 12 y 15, que deciden el modo de arranque. Antes de conectar nada ajustamos el LM2596 a 5,0\,V con un multímetro.
+
+\begin{figure}[htbp]
+\centering
+\adjustbox{max width=\linewidth}{\input{figuras/conexiones}}
+\caption{Diagrama de interconexiones del nodo. Las etiquetas grises indican la alimentación de cada sensor; el rojo es la línea de 12\,V del buzzer.}
+\label{fig:conexiones}
+\end{figure}
+
+\begin{table}[htbp]
+\centering
+\caption{Asignación de pines del ESP32 \pendiente{confirmar con el armado final}}
+\label{tab:pines}
+\footnotesize
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Señal} & \textbf{GPIO} & \textbf{Modo} \\
+\midrule
+PIR & 27 & Entrada \\
+MC-38 & 26 & \texttt{INPUT\_PULLUP}, el otro cable a GND \\
+SW-420 & 25 & Entrada \\
+Relé IN1 (buzzer) & 23 & Salida \\
+Servo (PWM) & 18 & Salida \\
+MQ-2 (opcional) & 34 & Entrada del ADC1, con divisor \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Al armar seguimos cuatro reglas. El servo toma sus 5\,V del LM2596 y nunca del pin de 5\,V del ESP32, y todas las tierras van unidas. El SW-420 se alimenta con 3,3\,V para que su salida no pase de 3,3\,V. El relé lleva el jumper en H, porque así se activa con la señal de 3,3\,V del ESP32.
+
+\subsection{Alimentación}
+La Figura~\ref{fig:alimentacion} sigue la energía desde la fuente, donde la línea de 12\,V va directo al contacto del relé y de ahí al buzzer. La otra rama pasa por el LM2596 y forma el riel de 5\,V que alimenta al ESP32, al PIR, a la bobina del relé y al servo. El SW-420 toma 3,3\,V del regulador del ESP32. La Tabla~\ref{tab:corriente} compara la corriente que pide cada diseño a la fuente.
+
+\begin{figure}[htbp]
+\centering
+\adjustbox{max width=\linewidth}{\input{figuras/alimentacion}}
+\caption{Árbol de alimentación. Rojo: 12\,V; gris: 5,0\,V; naranja: 3,3\,V.}
+\label{fig:alimentacion}
+\end{figure}
+
+\begin{table}[htbp]
+\centering
+\caption{Presupuesto de corriente en la fuente de 12\,V (estimado)}
+\label{tab:corriente}
+\footnotesize
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}L{6.5cm}cc@{}}
+\toprule
+\textbf{Escenario} & \textbf{Corriente} & \textbf{Uso de la fuente de 2\,A} \\
+\midrule
+Diseño P1, sirena y cerradura a la vez & 2,26\,A & Excede la fuente \\
+Diseño final, peor caso & $\approx$ 0,7\,A & $\approx$ 35\,\% \\
+Diseño final con ESP32-CAM y MQ-2 & $\approx$ 0,9\,A & $\approx$ 45\,\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+El peor caso supone el servo atascado, pidiendo unos 0,7\,A a 5\,V, que es un valor estimado. Las cargas de 5\,V se pasaron a su equivalente en 12\,V suponiendo que el LM2596 tiene una eficiencia de 85\,\%. Con este margen ya no hace falta la fuente de 4,2\,A que habíamos previsto en el perfil.
+
+\subsection{Programa del ESP32}
+Según el diagrama de flujo de la Figura~\ref{fig:flujo}, al encender el ESP32 se conecta al Wi-Fi y sincroniza su reloj por NTP. Luego carga el certificado raíz de Amazon, su propio certificado y su clave privada, y abre la sesión MQTT con AWS IoT Core por el puerto 8883. Después se suscribe al tópico de órdenes, publica su primer latido y recién entonces entra al ciclo de lectura. La rama de la izquierda es la que agregamos por el servo, y espera a que la puerta se cierre antes de mover el pestillo. Las dos cajas punteadas de arriba corren en paralelo al ciclo, el latido cada 30\,s y la orden de abrir cuando llega desde la aplicación.
+
+El programa usa las librerías \texttt{WiFiClientSecure}, PubSubClient, ArduinoJson y ESP32Servo. La dirección del broker, los datos del Wi-Fi y los certificados van en un archivo \texttt{secrets.h} aparte, que no se sube al repositorio, porque quien tenga la clave privada podría hacerse pasar por el nodo.
+
+\begin{figure}[htbp]
+\centering
+\adjustbox{max width=\linewidth}{\input{figuras/flujo}}
+\caption{Diagrama de flujo del programa del ESP32.}
+\label{fig:flujo}
+\end{figure}
+
+El ESP32 usa tres tópicos MQTT. Publica los eventos en \texttt{casa/puerta/eventos} y los latidos en \texttt{casa/puerta/estado}, y recibe las órdenes en \texttt{casa/puerta/comandos}. Los mensajes son JSON cortos, como los de la Figura~\ref{fig:mensaje}, donde el primero es un evento crítico disparado por el SW-420. El número de secuencia permite detectar mensajes perdidos, y la hora en milisegundos permite calcular la latencia. El ESP32 nunca manda un campo llamado \texttt{timestamp}, porque ese nombre lo usa la regla de AWS para anotar la hora de recepción.
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}{0.8\linewidth}
+\begin{lstlisting}
+// casa/puerta/eventos (ESP32 -> AWS)
+{"tipo": "vibracion", "nivel": "critico",
+ "mensaje": "Posible intento de ingreso forzado",
+ "seq": 128, "ts_evento": 1794614400123}
+
+// casa/puerta/estado (ESP32 -> AWS)
+{"puerta": "cerrada", "rssi": -61, "seq": 129,
+ "ts_evento": 1794614430000}
+
+// casa/puerta/comandos (AWS -> ESP32)
+{"accion": "abrir", "duracion_ms": 3000, "request_id": "..."}
+\end{lstlisting}
+\end{minipage}
+\caption{Ejemplo de un evento crítico, de un latido y de una orden de abrir, cada uno con su tópico.}
+\label{fig:mensaje}
+\end{figure}
+
+\subsection{Backend en AWS y aplicación móvil}
+Todo el backend corre en la región us-east-1 con los servicios de la Tabla~\ref{tab:aws}, y ninguno necesita un servidor propio. En IoT Core el ESP32 está registrado como el objeto \texttt{esp32\_puerta}, con un certificado activo y una política que dice qué tópicos puede usar. Al conectarse, el ESP32 demuestra que tiene la clave privada de su certificado sin enviarla, y si ese certificado se ve comprometido basta con desactivarlo. La conexión siempre la abre el ESP32, así que no necesita una IP pública ni puertos abiertos, y funciona igual en una casa o con un celular como punto de acceso.
+
+\begin{table}[htbp]
+\centering
+\caption{Recursos del backend en AWS}
+\label{tab:aws}
+\footnotesize
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}L{2.4cm}L{4.4cm}L{6.2cm}@{}}
+\toprule
+\textbf{Servicio} & \textbf{Recurso} & \textbf{Función} \\
+\midrule
+IoT Core & Objeto \texttt{esp32\_puerta}, certificado y política & Broker MQTT y registro del dispositivo \\
+Reglas de IoT & \texttt{GuardarEventosPuerta}, \texttt{GuardarEstadoPuerta} & Copian cada mensaje a su tabla y le agregan la hora de llegada \\
+DynamoDB & \texttt{EventosPuerta}, \texttt{EstadoPuerta} & Historial de eventos y último estado de la puerta \\
+Lambda & \texttt{abrirPuerta}, \texttt{consultarPuerta} & Validar el PIN y mandar la orden, responder las consultas \\
+API Gateway & \texttt{api\_puerta} (HTTP) & URL pública con HTTPS para la aplicación \\
+IAM y CloudWatch & Roles con permisos mínimos y registros & Seguridad entre servicios y depuración \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+La Figura~\ref{fig:secuencia} sigue los dos recorridos principales. Arriba, el ESP32 marca la hora del evento $t_e$ y lo publica, y la regla \texttt{GuardarEventosPuerta} lo guarda con la hora de recepción $t_r$. La diferencia entre ambas es la latencia de la Tabla~\ref{tab:metricas}. Después la aplicación pide el historial con \texttt{GET /eventos}, y \texttt{consultarPuerta} lo lee de DynamoDB, del más reciente al más antiguo. Abajo, la aplicación manda el PIN con \texttt{POST /abrir}, y \texttt{abrirPuerta} responde con éxito o con un error 401 y, si el PIN es correcto, publica la orden que el ESP32 recibe por la conexión que ya tenía abierta. El PIN vive solo en una variable de entorno de esa Lambda, y la Figura~\ref{fig:app} muestra la aplicación móvil en funcionamiento.
+
+\begin{figure}[htbp]
+\centering
+\adjustbox{max width=\linewidth}{\input{figuras/secuencia}}
+\caption{Recorrido de un evento hasta la aplicación (arriba) y de una orden de abrir hasta el ESP32 (abajo), con los puntos donde se mide la latencia.}
+\label{fig:secuencia}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\imagen{app.png}{0.9\linewidth}{6.5cm}{Capturas de la aplicación móvil puestas lado a lado: estado del nodo, historial de eventos y gráficos de métricas.}
+\caption{Aplicación móvil durante una prueba. \pendiente{Describir en una oración qué se ve en la captura.}}
+\label{fig:app}
+\end{figure}
+
+\subsection{Carcasa y armado}
+La casa se armó a mano con cartón reciclado, a partir de plantillas a escala 1:1 impresas en A4. La electrónica principal va en la base (172 × 172 × 42\,mm con cartón de 3\,mm), y encima está la casa de 100 × 100 × 60\,mm con el techo desmontable, y el jack de 12\,V sale por la pared trasera. El domo del PIR asoma por el jardín como si fuera una bola de nieve, y el buzzer queda bajo un copo de cartón que hace de rejilla. El reed del MC-38 va por dentro, sobre la puerta, a 2\,mm del imán pegado en la hoja. El SW-420 va pegado con silicona en la pared izquierda, junto al frente, porque la cinta de espuma amortigua los golpes. El servo está encastrado en el piso de la casa y su brazo hace de pestillo, como se ve en la Figura~\ref{fig:armado}, que reúne estas partes en el prototipo real.
+
+\begin{figure}[htbp]
+\centering
+\begin{tabular}{@{}ccc@{}}
+\imagen{prototipo.jpg}{0.31\linewidth}{4cm}{Casa terminada, vista frontal, con la puerta cerrada.} &
+\imagen{compartimento.jpg}{0.31\linewidth}{4cm}{Base abierta desde arriba: ESP32 en el shield, relé, LM2596 y protoboard.} &
+\imagen{puerta.jpg}{0.31\linewidth}{4cm}{Puerta abierta: reed sobre el marco e imán en la hoja.} \\
+{\footnotesize (a)} & {\footnotesize (b)} & {\footnotesize (c)} \\[2mm]
+\imagen{sw420.jpg}{0.31\linewidth}{4cm}{SW-420 pegado en la pared izquierda, por dentro.} &
+\imagen{servo.jpg}{0.31\linewidth}{4cm}{Servo en el piso con el pestillo trabando la puerta.} &
+\imagen{lm2596.jpg}{0.31\linewidth}{4cm}{LM2596 con el multímetro marcando 5,0\,V.} \\
+{\footnotesize (d)} & {\footnotesize (e)} & {\footnotesize (f)} \\
+\end{tabular}
+\caption{Armado del prototipo. (a) Casa terminada. (b) Electrónica en la base. (c) Sensor magnético en la puerta. (d) Sensor de vibración. (e) Servo y pestillo. (f) Ajuste del LM2596 a 5,0\,V.}
+\label{fig:armado}
+\end{figure}
+
+\subsection{Calibración}
+El PIR alcanza hasta 7\,m, mucho más de lo que mide la maqueta, y en un aula con gente se activaría todo el tiempo. Por eso bajamos su sensibilidad con el potenciómetro y limitamos su campo de visión. El SW-420 se ajusta con su propio potenciómetro. \pendiente{Describir el criterio de ajuste del SW-420 y anotar la sensibilidad y el tiempo de retención finales del PIR.}
+
+%=================================================================
+\section{Análisis de resultados}
+\label{sec:resultados}
+
+\pendiente{Las cifras de esta sección y las Figuras~\ref{fig:latencia}, \ref{fig:rssi} y~\ref{fig:eventos} usan datos de ejemplo. Reemplazar los archivos de figuras/datos/ con las mediciones reales y completar los valores marcados en rojo.}
+
+\subsection{Pruebas del backend}
+Antes de conectar el ESP32 probamos cada parte de AWS por separado, en el orden en que se construyó. Para simular al nodo publicamos mensajes desde el cliente de prueba MQTT de la consola de IoT Core, y la API la probamos desde el navegador y con \texttt{curl}. Las seis pruebas de la Tabla~\ref{tab:pruebas-aws} pasaron.
+
+\begin{table}[htbp]
+\centering
+\caption{Pruebas del backend en AWS, sin el ESP32}
+\label{tab:pruebas-aws}
+\footnotesize
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}cL{8.6cm}c@{}}
+\toprule
+\textbf{N.°} & \textbf{Prueba} & \textbf{Resultado} \\
+\midrule
+1 & Un evento publicado a mano en \texttt{casa/puerta/eventos} aparece en \texttt{EventosPuerta} & Correcto \\
+2 & \texttt{abrirPuerta} con el PIN correcto responde 200 y publica en \texttt{casa/puerta/comandos} & Correcto \\
+3 & Un PIN incorrecto devuelve 401 y registra \texttt{pin\_incorrecto} & Correcto \\
+4 & \texttt{consultarPuerta} responde \texttt{/estado} y \texttt{/eventos} & Correcto \\
+5 & \texttt{GET /estado} y \texttt{GET /eventos} desde el navegador & Correcto \\
+6 & \texttt{POST /abrir} con \texttt{curl} & Correcto \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Pruebas funcionales}
+Después comprobamos que el sistema completo hiciera lo que dice el diseño. \pendiente{Falta cargar el programa en el ESP32 y probarlo con el circuito armado.} La Tabla~\ref{tab:pruebas} lista los escenarios que probamos sobre la maqueta, el resultado esperado y lo que observamos después de repetir cada uno \pendiente{N} veces.
+
+\begin{table}[htbp]
+\centering
+\caption{Pruebas funcionales sobre el prototipo}
+\label{tab:pruebas}
+\footnotesize
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}cL{4.6cm}L{4.6cm}L{2.6cm}@{}}
+\toprule
+\textbf{N.°} & \textbf{Escenario} & \textbf{Resultado esperado} & \textbf{Observado} \\
+\midrule
+1 & Solo se activa el PIR & Alerta leve, sin buzzer & \pendiente{completar} \\
+2 & Golpe y apertura en menos de 10\,s & Crítico, buzzer y pestillo & \pendiente{completar} \\
+3 & PIR y apertura separados más de 10\,s & Dos alertas leves & \pendiente{completar} \\
+4 & Evento crítico con la puerta abierta & Buzzer suena y el pestillo espera el cierre & \pendiente{completar} \\
+5 & Evento crítico sin Wi-Fi & Buzzer y pestillo funcionan, la app no recibe el evento & \pendiente{completar} \\
+6 & Servo y buzzer activos a la vez & El ESP32 no se reinicia & \pendiente{completar} \\
+7 & Alerta marcada como falsa en la app & Sube la tasa de falsas alarmas & \pendiente{completar} \\
+8 & Abrir desde la app con el PIN correcto & El pestillo se suelta 3\,s y vuelve a trabar, sin alarma & \pendiente{completar} \\
+9 & Abrir la puerta sin una orden previa & Evento \texttt{puerta\_forzada} & \pendiente{completar} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Latencia}
+La Figura~\ref{fig:latencia} reúne la latencia de \pendiente{N} eventos, medida entre el ESP32 y AWS IoT Core. La mayoría llegó en menos de \pendiente{X}\,ms, el promedio fue de \pendiente{X}\,ms y el percentil 95 de \pendiente{X}\,ms, \pendiente{por debajo / por encima} de la meta de 2\,s. \pendiente{Explicar los valores más altos, por ejemplo reconexiones del Wi-Fi.}
+
+\begin{figure}[htbp]
+\centering
+\input{figuras/graf_latencia}
+\caption{Distribución de la latencia de los eventos entre el ESP32 y AWS IoT Core. La línea discontinua marca la meta de 2\,s.}
+\label{fig:latencia}
+\end{figure}
+
+\subsection{Disponibilidad y calidad del enlace}
+Dejamos el nodo encendido \pendiente{X} horas con la aplicación abierta, y la Figura~\ref{fig:rssi} muestra el RSSI de cada latido, donde cada hueco en la línea es un latido que no llegó. En total llegaron \pendiente{X} de \pendiente{X} latidos esperados, lo que da una disponibilidad de \pendiente{X}\,\%. El RSSI promedio fue de \pendiente{X}\,dBm y la pérdida de mensajes, según los huecos en el número de secuencia, fue de \pendiente{X}\,\%.
+
+\begin{figure}[htbp]
+\centering
+\input{figuras/graf_rssi}
+\caption{RSSI reportado en cada latido. Un hueco en la línea indica latidos perdidos.}
+\label{fig:rssi}
+\end{figure}
+
+\subsection{Eventos por sensor y falsas alarmas}
+La Figura~\ref{fig:eventos} cuenta cuántas veces se activó cada sensor y cuántas de esas alertas marcamos como falsas. \pendiente{Comentar qué sensor fue el más ruidoso y por qué.} La tasa de falsas alarmas del sistema fue de \pendiente{X}\,\%. \pendiente{Indicar cuántos eventos críticos fueron falsos. La regla de dos sensores debería dejar este número cerca de cero.}
+
+\begin{figure}[htbp]
+\centering
+\input{figuras/graf_eventos}
+\caption{Activaciones por sensor y alertas marcadas como falsas durante las pruebas.}
+\label{fig:eventos}
+\end{figure}
+
+\subsection{Consumo de energía}
+La Figura~\ref{fig:corriente} compara la corriente estimada de los tres escenarios de la Tabla~\ref{tab:corriente} con el límite de la fuente. Con la sirena y la cerradura del perfil, los actuadores solos pedían 1,90\,A y el total pasaba los 2\,A. Con el buzzer y el servo, el peor caso queda en 0,70\,A, y aun sumando la ESP32-CAM y el MQ-2 se usa menos de la mitad de la fuente. \pendiente{Medir con el multímetro la corriente en reposo y con el buzzer y el servo activos, y comparar con la estimación.}
+
+\begin{figure}[htbp]
+\centering
+\input{figuras/graf_corriente}
+\caption{Corriente estimada en la fuente de 12\,V para el diseño del perfil y el diseño final. La línea discontinua es el límite de 2\,A.}
+\label{fig:corriente}
+\end{figure}
+
+\subsection{Discusión}
+\pendiente{Redactar con los resultados reales. Comparar la latencia con los 8 a 9\,s de Aprilia y Purwanto \cite{aprilia2025boarding} y con los 1161,60\,ms de respuesta local de Jama et al. \cite{jama2026edge}. Comentar si la regla de 10\,s redujo las falsas alarmas frente a las alertas de un solo sensor.}
+
+%=================================================================
+\section{Descripción del mercado}
+\label{sec:mercado}
+
+El prototipo apunta a hogares que hoy no tienen alarma porque las opciones comerciales les resultan caras, como casas y departamentos de Lima, bodegas y cuartos alquilados a estudiantes. Lo que necesitan es un aviso confiable cuando alguien fuerza la puerta, sin pagar un servicio de monitoreo. La Figura~\ref{fig:costos} muestra que los materiales del nodo cuestan unos S/~160, sin contar el buzzer y el servo, y que el procesamiento (ESP32 y shield) y la alimentación son lo más caro. En la nube no hay un servidor encendido todo el día. IoT Core, Lambda, DynamoDB en modo bajo demanda y API Gateway cobran por mensaje y por consulta, así que el costo crece con el número de clientes y no con las horas de uso. \pendiente{Anotar el costo mensual real del backend según AWS Billing.}
+
+Proponemos un modelo de dos ingresos, resumido en la Figura~\ref{fig:mercado}. El cliente paga una vez por el kit instalado, con sensores, alarma y pestillo, y la alarma local funciona aunque no pague nada más. La suscripción mensual cubre ese costo por uso y da acceso a la aplicación, con avisos en tiempo real, apertura con PIN, historial y métricas que muestran si el equipo estuvo conectado y cuántas alertas fueron falsas, algo que las alarmas baratas no ofrecen. El video publicitario está disponible en \url{\videourl} \pendiente{reemplazar el enlace} y en el código QR de la Figura~\ref{fig:mercado}.
+
+\begin{figure}[htbp]
+\centering
+\input{figuras/graf_costos}
+\caption{Costo de los materiales del nodo por bloque, según la lista de materiales (precios de tiendas peruanas consultados en octubre de 2026). Actuación no incluye el buzzer ni el servo \pendiente{agregar sus precios}.}
+\label{fig:costos}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\begin{minipage}[c]{0.78\linewidth}\centering
+\adjustbox{max width=\linewidth}{\input{figuras/mercado}}
+\end{minipage}\hfill
+\begin{minipage}[c]{0.18\linewidth}\centering
+\qrcode[height=2.2cm]{\videourl}\\[1mm]
+{\scriptsize Video publicitario}
+\end{minipage}
+\caption{Modelo de negocio propuesto (izquierda) y código QR del video publicitario (derecha).}
+\label{fig:mercado}
+\end{figure}
+
+%=================================================================
+\section{Conclusiones y recomendaciones}
+\label{sec:conclusiones}
+
+\subsection{Conclusiones}
+Construimos un sistema de seguridad residencial que detecta intrusiones con tres sensores, decide en el ESP32 y responde sin depender de Internet. La regla de dos sensores en 10\,s permite separar una alerta leve de un evento crítico con una lógica simple que cabe en un microcontrolador, como resume la Figura~\ref{fig:ventana}.
+
+Cambiar la sirena y la cerradura por un buzzer y un servo fue la decisión de diseño con más efecto. La corriente estimada en el peor caso bajó de 2,26\,A a unos 0,7\,A, así que la fuente de 2\,A alcanza con margen incluso si se agregan los opcionales, a cambio de un bloqueo que es solo demostrativo.
+
+Pasar del servidor EC2 a servicios administrados de AWS también simplificó la nube. Ya no hay un broker que instalar ni actualizar, cada mensaje se guarda con una regla en lugar de código propio, y el ESP32 se identifica con un certificado en lugar de una contraseña. Todo el lado de AWS pasó sus pruebas antes de conectar el hardware, como muestra la Tabla~\ref{tab:pruebas-aws}.
+
+\pendiente{Conclusión sobre la latencia medida frente a la meta de 2\,s en el percentil 95.} \pendiente{Conclusión sobre la disponibilidad, la pérdida de mensajes y las falsas alarmas.}
+
+La Tabla~\ref{tab:requisitos} revisa los requisitos técnicos del curso.
+
+\begin{table}[htbp]
+\centering
+\caption{Cumplimiento de los requisitos técnicos del curso}
+\label{tab:requisitos}
+\footnotesize
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}L{3.6cm}L{2.6cm}L{6.4cm}@{}}
+\toprule
+\textbf{Requisito} & \textbf{Estado} & \textbf{Cómo se cumple} \\
+\midrule
+Mínimo 3 sensores & Cumple & PIR, MC-38 y SW-420 \\
+Mínimo 1 actuador & Cumple & Buzzer y servo con pestillo \\
+Comunicación inalámbrica & Cumple & Wi-Fi y MQTT con TLS hasta AWS IoT Core \\
+Interfaz con procesamiento & Cumple \pendiente{falta la Lambda de métricas} & Reglas de IoT, Lambdas y seis métricas \\
+Carcasa & Cumple & Casa de cartón reciclado con la electrónica oculta \\
+App móvil (opcional) & Cumple \pendiente{confirmar} & Aplicación propia que usa la API de AWS \\
+PCB propia (bonus) & No incluida & Se usó shield de borneras y protoboard \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Recomendaciones}
+Para acercar el prototipo a una casa real, lo primero sería agregar una batería de respaldo, porque hoy un corte de luz apaga todo el sistema. La API también necesita inicio de sesión, por ejemplo con Amazon Cognito, para que nadie más que el dueño pueda leer los eventos o intentar abrir la puerta. También convendría diseñar una PCB propia que reemplace el protoboard y los cables Dupont, ya que hacen al equipo más frágil. Con varios nodos se podría vigilar más de una puerta, y la regla de correlación podría cruzar sensores de zonas distintas. La ESP32-CAM y el MQ-2 ya están en el equipo y son la mejora más directa. A más largo plazo, la detección por CSI de Wi-Fi de Zhuang et al. \cite{zhuang2021intrusion} podría sumarse como un cuarto sensor sin agregar hardware en la zona vigilada.
+
+%=================================================================
+\begin{thebibliography}{99}
+
+\bibitem{alfuqaha2015survey}
+A.~Al-Fuqaha, M.~Guizani, M.~Mohammadi, M.~Aledhari y M.~Ayyash, ``Internet of Things: A survey on enabling technologies, protocols, and applications,'' \emph{IEEE Communications Surveys \& Tutorials}, vol.~17, no.~4, pp.~2347--2376, 2015, doi: 10.1109/COMST.2015.2444095.
+
+\bibitem{oktafiani2025esp32}
+F.~Oktafiani y D.~Widhiantoro, ``Studi literatur penggunaan ESP32 untuk sistem keamanan lingkungan rumah,'' en \emph{Seminar Nasional Inovasi Vokasi (SNIV)}, vol.~4, no.~1, pp.~267--274, jun. 2025.
+
+\bibitem{arinde2024multisensor}
+V.~Arinde y L.~Idowu, ``Multi-sensor intrusion detection system,'' arXiv:2406.05137, 2024.
+
+\bibitem{pugh2015fusion}
+M.~Pugh, J.~Brewer y J.~Kvam, ``Sensor fusion for intrusion detection under false alarm constraints,'' en \emph{2015 IEEE Sensors Applications Symposium (SAS)}, 2015, pp.~1--6, doi: 10.1109/SAS.2015.7133634.
+
+\bibitem{ray2018survey}
+P.~P. Ray, ``A survey on Internet of Things architectures,'' \emph{Journal of King Saud University -- Computer and Information Sciences}, vol.~30, no.~3, pp.~291--319, 2018, doi: 10.1016/j.jksuci.2016.10.003.
+
+\bibitem{nannung2025iot}
+J.~Nannung, A.~S. Miru, Muliadi y Gunawan, ``Development of an IoT-based home security system prototype using multisensors and ESP32-CAM,'' \emph{Journal of Embedded Systems, Security and Intelligent Systems}, vol.~6, no.~2, pp.~168--177, 2025, doi: 10.59562/jessi.v6i2.8456.
+
+\bibitem{light2017mosquitto}
+R.~A. Light, ``Mosquitto: server and client implementation of the MQTT protocol,'' \emph{Journal of Open Source Software}, vol.~2, no.~13, p.~265, 2017, doi: 10.21105/joss.00265.
+
+\bibitem{aws2026iot}
+Amazon Web Services, ``What is AWS IoT?,'' en \emph{AWS IoT Core Developer Guide}. [En línea]. Disponible en: \url{https://docs.aws.amazon.com/iot/latest/developerguide/what-is-aws-iot.html} (consultado: 13 nov. 2026).
+
+\bibitem{aws2026lambda}
+Amazon Web Services, ``What is AWS Lambda?,'' en \emph{AWS Lambda Developer Guide}. [En línea]. Disponible en: \url{https://docs.aws.amazon.com/lambda/latest/dg/welcome.html} (consultado: 13 nov. 2026).
+
+\bibitem{shi2016edge}
+W.~Shi, J.~Cao, Q.~Zhang, Y.~Li y L.~Xu, ``Edge computing: Vision and challenges,'' \emph{IEEE Internet of Things Journal}, vol.~3, no.~5, pp.~637--646, 2016, doi: 10.1109/JIOT.2016.2579198.
+
+\bibitem{walchli2009building}
+M.~Wälchli y T.~Braun, ``Building intrusion detection with a wireless sensor network,'' en \emph{Ad Hoc Networks (ADHOCNETS 2009)}, LNICST, vol.~28, Springer, 2010, pp.~607--622, doi: 10.1007/978-3-642-11723-7\_41.
+
+\bibitem{jin2018wlid}
+Y.~Jin, Z.~Tian, M.~Zhou, Z.~Li y Z.~Zhang, ``A whole-home level intrusion detection system using WiFi-enabled IoT,'' en \emph{2018 14th International Wireless Communications \& Mobile Computing Conference (IWCMC)}, 2018, pp.~494--499, doi: 10.1109/IWCMC.2018.8450442.
+
+\bibitem{aprilia2025boarding}
+M.~W. Aprilia y A.~Purwanto, ``IoT-based boarding room security system using PIR sensor and ESP32-CAM with Telegram notification,'' \emph{Jurnal Ilmu Fisika dan Terapannya}, vol.~12, no.~2, pp.~95--102, 2025, doi: 10.21831/jifta.v12i2.25388.
+
+\bibitem{jama2026edge}
+Y.~A. Jama, K.~W. Muse y R.~M. Ali, ``Empirical evaluation of a layered edge--cloud IoT security architecture for resilient residential access control,'' \emph{Open Research Africa}, vol.~9, p.~35, 2026, doi: 10.12688/openresafrica.16524.1.
+
+\bibitem{mishra2020mqtt}
+B.~Mishra y A.~Kertesz, ``The use of MQTT in M2M and IoT systems: A survey,'' \emph{IEEE Access}, vol.~8, pp.~201071--201086, 2020, doi: 10.1109/ACCESS.2020.3035849.
+
+\bibitem{bender2021mqtt}
+M.~Bender, E.~Kirdan, M.-O. Pahl y G.~Carle, ``Open-source MQTT evaluation,'' en \emph{2021 IEEE 18th Annual Consumer Communications \& Networking Conference (CCNC)}, 2021, pp.~1--4, doi: 10.1109/CCNC49032.2021.9369499.
+
+\bibitem{zhuang2021intrusion}
+W.~Zhuang, Y.~Shen, L.~Li, C.~Gao y D.~Dai, ``Develop an adaptive real-time indoor intrusion detection system based on empirical analysis of OFDM subcarriers,'' \emph{Sensors}, vol.~21, no.~7, art.~2287, 2021, doi: 10.3390/s21072287.
+
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,44 @@
+% Interconexiones del nodo: qué pin del ESP32 va a cada módulo.
+\begin{tikzpicture}[font=\footnotesize,
+  pin/.style={font=\scriptsize\ttfamily, text=black!80},
+  nota/.style={font=\scriptsize, text=black!55},
+  senal/.style={thick, draw=black!75},
+  v12/.style={thick, draw=red!65!black},
+]
+  % ESP32 con sus pines
+  \node[caja=cProc, minimum width=2.6cm, minimum height=4.4cm] (esp) at (0,0) {};
+  \node[font=\footnotesize\bfseries, text=cProc] at (0,1.85) {ESP32};
+  \node[pin, anchor=west] (p27) at (-1.25,1.0)  {GPIO27};
+  \node[pin, anchor=west] (p26) at (-1.25,0.0)  {GPIO26};
+  \node[pin, anchor=west] (p25) at (-1.25,-1.0) {GPIO25};
+  \node[pin, anchor=east] (p23) at (1.25,1.0)   {GPIO23};
+  \node[pin, anchor=east] (p18) at (1.25,-0.4)  {GPIO18};
+  \node[pin, anchor=east] (pvin) at (1.25,-1.9) {VIN};
+  \node[pin, anchor=west] (p33) at (-1.25,-1.8) {3V3};
+
+  % Sensores a la izquierda
+  \node[caja=cSensor, minimum width=1.9cm] (pir) at (-4.3,1.0)  {PIR};
+  \node[caja=cSensor, minimum width=1.9cm] (mag) at (-4.3,0.0)  {MC-38};
+  \node[caja=cSensor, minimum width=1.9cm] (vib) at (-4.3,-1.0) {SW-420};
+  \draw[senal] (pir.east) -- (esp.west |- pir.east);
+  \draw[senal] (mag.east) -- (esp.west |- mag.east);
+  \draw[senal] (vib.east) -- (esp.west |- vib.east);
+  \node[nota, left=1pt of pir] {5\,V};
+  \node[nota, left=1pt of mag] {GND};
+  \node[nota, left=1pt of vib] {3,3\,V};
+
+  % Actuadores a la derecha
+  \node[caja=cAct, minimum width=1.9cm] (rel) at (4.1,1.0)  {Relé CH1\\{\scriptsize jumper en H}};
+  \node[caja=cAct, minimum width=1.9cm] (srv) at (4.1,-0.4) {Servo SG90};
+  \node[caja=cAct, minimum width=1.9cm] (buz) at (7.3,1.0)  {Buzzer};
+  \draw[senal] (esp.east |- rel.west) -- node[etiqueta, above] {IN1} (rel.west);
+  \draw[senal] (esp.east |- srv.west) -- node[etiqueta, above] {PWM} (srv.west);
+  \draw[v12] (rel.east) -- node[etiqueta, above] {NO} (buz.west);
+  \draw[v12] (rel.north) -- ++(0,0.5) node[above, font=\scriptsize, text=red!65!black] {12\,V a COM};
+  \node[nota, below=1pt of srv] {+ 1000\,\textmu F};
+
+  % Alimentación de 5 V
+  \node[caja=cPower, minimum width=1.9cm] (lm) at (4.1,-1.9) {LM2596\\{\scriptsize 5,0\,V}};
+  \draw[thick, draw=cPower] (lm.west) -- (esp.east |- lm.west);
+  \node[nota, anchor=north] at (0,-2.45) {Todas las tierras unidas};
+\end{tikzpicture}

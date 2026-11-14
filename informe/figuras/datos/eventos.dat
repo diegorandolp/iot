@@ -1,0 +1,6 @@
+% DATOS DE EJEMPLO: reemplazar con los conteos reales de la prueba.
+% activaciones = veces que se activó el sensor; falsas = alertas marcadas como falsas.
+sensor activaciones falsas
+PIR 34 6
+MC-38 21 0
+SW-420 27 4

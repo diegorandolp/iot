@@ -1,0 +1,12 @@
+Casita IoT para imprimir
+========================
+
+stl/      17 piezas, orientadas y apoyadas en la cama. Unidades: mm.
+fuente/   Generador. Para cambiar una medida, edita spec.mjs y corre:
+
+            node parts.mjs     # rehace las piezas y comprueba que sean estancas
+            node check.mjs     # choques, giro de la puerta, pestillo y cama
+            node export.mjs    # reescribe stl/
+
+          orig.json son las mallas de casita_iot (el .blend original no se modificó).
+          extract.py la vuelve a sacar de un .blend copiado como casita_orig.blend.

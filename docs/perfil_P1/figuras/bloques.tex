@@ -1,0 +1,38 @@
+\begin{tikzpicture}[font=\footnotesize]
+  % Capa de percepción
+  \node[caja=cSensor] (pir) at (-2.65,0)  {Sensor PIR\\{\scriptsize HC-SR501}};
+  \node[caja=cSensor] (mag) at (0,0)      {Sensor magnético\\{\scriptsize MC-38}};
+  \node[caja=cSensor] (vib) at (2.65,0)   {Sensor de vibración\\{\scriptsize SW-420}};
+  % Procesamiento
+  \node[caja=cProc, minimum width=2.2cm, minimum height=1cm] (esp) at (0,-1.9)
+    {\textbf{Microcontrolador}\\\textbf{ESP32}};
+  % Nube e interfaz
+  \node[caja=cApp, minimum width=1.8cm] (srv) at (3.0,-1.9) {Servidor AWS\\{\scriptsize MQTT + backend}};
+  \node[caja=cApp, minimum width=1.8cm] (web) at (3.0,-3.6) {App web\\{\scriptsize métricas}};
+  % Actuación
+  \node[caja=cPower, minimum width=2cm] (psu) at (-2.75,-3.6) {Fuente\\externa 12\,V};
+  \node[caja=cAct] (relay) at (0,-3.6)    {Módulo de relés};
+  \node[caja=cAct] (sirena) at (-1.3,-5.2) {Sirena\\{\scriptsize 12\,V}};
+  \node[caja=cAct] (lock) at (1.3,-5.2)    {Cerradura\\solenoide {\scriptsize 12\,V}};
+
+  % Sensores -> ESP32 (entradas GPIO)
+  \draw[flecha] (pir.south) -- ++(0,-0.45) -| ([xshift=-7mm]esp.north);
+  \draw[flecha] (mag.south) -- (esp.north)
+    node[etiqueta, pos=0.4] {GPIO};
+  \draw[flecha] (vib.south) -- ++(0,-0.45) -| ([xshift=7mm]esp.north);
+
+  % ESP32 -> nube -> app
+  \draw[flecha, dashed, draw=cApp] (esp.east) -- (srv.west)
+    node[midway, above, font=\scriptsize, text=cApp] {Wi-Fi};
+  \node[font=\scriptsize, text=cApp, below=0pt of $(esp.east)!0.5!(srv.west)$] {MQTT};
+  \draw[flecha, draw=cApp] (srv.south) -- (web.north)
+    node[midway, left, font=\scriptsize, text=cApp] {HTTPS};
+
+  % ESP32 -> relés -> actuadores
+  \draw[flecha] (esp.south) -- (relay.north)
+    node[etiqueta, midway] {GPIO};
+  \draw[flecha, draw=cPower] (psu.east) -- (relay.west)
+    node[midway, above, font=\scriptsize, text=cPower] {12\,V};
+  \draw[flecha] (relay.south) -- ++(0,-0.4) -| (sirena.north);
+  \draw[flecha] (relay.south) -- ++(0,-0.4) -| (lock.north);
+\end{tikzpicture}

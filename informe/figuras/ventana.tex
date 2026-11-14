@@ -1,0 +1,39 @@
+% Dos casos sobre una línea de tiempo: la ventana de 10 s decide el nivel.
+% 1 cm = 2 s
+\begin{tikzpicture}[font=\footnotesize, x=0.5cm,
+  evento/.style={circle, fill=#1, draw=white, line width=0.8pt, minimum size=7pt, inner sep=0pt},
+  nombre/.style={font=\scriptsize, text=black!75},
+  resultado/.style={rounded corners=2pt, fill=#1!12, draw=#1, thick, font=\scriptsize\bfseries,
+    text=#1, minimum width=1.7cm, minimum height=0.6cm},
+]
+  % Caso 1: golpe y luego apertura, 5 s de diferencia
+  \node[anchor=east, font=\footnotesize\bfseries] at (-0.6,0) {Caso 1};
+  \fill[cAct!12] (2,-0.32) rectangle (12,0.32);
+  \draw[black!40] (0,0) -- (22,0);
+  \node[evento=cSensor] (a1) at (2,0) {};
+  \node[evento=cSensor] (a2) at (7,0) {};
+  \node[nombre, above=2pt of a1] {SW-420};
+  \node[nombre, above=2pt of a2] {MC-38};
+  \draw[|<->|, cAct, thick] (2,-0.55) -- node[below, font=\scriptsize] {ventana de 10\,s} (12,-0.55);
+  \node[resultado=cAct, anchor=west] at (23,0) {Crítico};
+
+  % Caso 2: movimiento y apertura separados por 13 s
+  \begin{scope}[yshift=-1.9cm]
+    \node[anchor=east, font=\footnotesize\bfseries] at (-0.6,0) {Caso 2};
+    \fill[cProc!10] (3,-0.32) rectangle (13,0.32);
+    \draw[black!40] (0,0) -- (22,0);
+    \node[evento=cSensor] (b1) at (3,0) {};
+    \node[evento=cSensor] (b2) at (16,0) {};
+    \node[nombre, above=2pt of b1] {PIR};
+    \node[nombre, above=2pt of b2] {MC-38};
+    \draw[|<->|, cProc, thick] (3,-0.55) -- node[below, font=\scriptsize] {10\,s} (13,-0.55);
+    \node[resultado=cProc, anchor=west] at (23,0) {2 leves};
+  \end{scope}
+
+  % Eje de tiempo
+  \begin{scope}[yshift=-3.3cm]
+    \draw[->, black!60] (0,0) -- (22,0) node[right, font=\scriptsize, text=black!60] {$t$ (s)};
+    \foreach \t in {0,5,10,15,20}
+      \draw[black!60] (\t,0.08) -- (\t,-0.08) node[below, font=\scriptsize, text=black!60] {\t};
+  \end{scope}
+\end{tikzpicture}

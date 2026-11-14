@@ -1,0 +1,1487 @@
+<title>Casita IoT de cartón</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,650&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>/* Concepto: banco de maquetista. El visor es la mesa; debajo, las láminas de corte y el armado. */
+:root {
+  --bg: #edf1f0; --surface: #fbfcfb; --surface-2: #e3e9e7; --ink: #142019; --ink-2: #435049; --ink-3: #5f6c65; --line: #cdd7d3;
+  --accent: #1e6b4c; --accent-ink: #ffffff; --wreath: #9a3328; --visor: #dde6e5;
+  --ok: #17744a; --ok-bg: #dcefe4; --warn: #8a5a00; --warn-bg: #f6ead0; --kraft: #ecdcc4; --kraft-ink: #6b4a26;
+  --f-display: "Bricolage Grotesque", "Avenir Next Condensed", "Arial Narrow", sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1513; --surface: #16201d; --surface-2: #1f2b27; --ink: #e5eeea; --ink-2: #b3c1bb; --ink-3: #93a29b; --line: #2d3b36;
+    --accent: #5cc79a; --accent-ink: #06261a; --wreath: #e0786b; --visor: #1a2522;
+    --ok: #67d39f; --ok-bg: #133326; --warn: #efbf6a; --warn-bg: #3a2c0f; --kraft: #3a2f22; --kraft-ink: #e3c79f; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1513; --surface: #16201d; --surface-2: #1f2b27; --ink: #e5eeea; --ink-2: #b3c1bb; --ink-3: #93a29b; --line: #2d3b36;
+  --accent: #5cc79a; --accent-ink: #06261a; --wreath: #e0786b; --visor: #1a2522;
+  --ok: #67d39f; --ok-bg: #133326; --warn: #efbf6a; --warn-bg: #3a2c0f; --kraft: #3a2f22; --kraft-ink: #e3c79f; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.55; }
+.page { max-width: 1360px; margin: 0 auto; padding-block: 28px 72px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 48px; }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 650; margin: 0; line-height: 1.08; text-wrap: balance; letter-spacing: -0.01em; }
+h1 { font-size: clamp(2.2rem, 5vw, 3.6rem); }
+h2 { font-size: clamp(1.55rem, 3vw, 2.15rem); }
+h3 { font-size: 1.18rem; }
+p { margin: 0; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.eyebrow { font-family: var(--f-mono); font-size: 0.76rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-3); }
+.lede { font-size: 1.1rem; color: var(--ink-2); max-width: 64ch; }
+.mono { font-family: var(--f-mono); font-size: 0.88em; }
+
+.top { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 24px; align-items: end; }
+.top-text { display: grid; gap: 12px; min-width: 0; }
+.stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.stat { background: var(--surface); padding: 14px 16px; display: grid; gap: 2px; align-content: start; min-width: 0; }
+.stat b { font-family: var(--f-display); font-size: 2.1rem; font-weight: 650; line-height: 1.05; }
+.stat span { font-size: 0.9rem; color: var(--ink-2); line-height: 1.35; }
+
+section { display: grid; gap: 18px; min-width: 0; }
+.sec-head { display: grid; gap: 6px; max-width: 74ch; }
+.sec-head p { color: var(--ink-2); }
+
+/* Visor */
+.banco { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 12px; min-width: 0; }
+.mesa { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; display: grid; min-width: 0; }
+.barra { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 10px 12px; border-bottom: 1px solid var(--line); align-items: end; }
+.grupo { display: grid; gap: 4px; }
+.grupo > span { font: 500 0.72rem var(--f-mono); color: var(--ink-3); letter-spacing: 0.03em; }
+.fila { display: flex; gap: 4px; flex-wrap: wrap; }
+button { font: 500 0.92rem var(--f-body); color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 6px 11px; min-height: 36px; cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+button.accion { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+#lienzo { display: block; width: 100%; height: min(68vh, 640px); min-height: 380px; cursor: grab; touch-action: none; background: var(--visor); }
+.corte { display: flex; gap: 10px; align-items: center; padding: 8px 12px; border-top: 1px solid var(--line); font-size: 0.9rem; }
+.corte input { flex: 1; accent-color: var(--accent); min-width: 0; }
+.panel { display: grid; gap: 12px; align-content: start; min-width: 0; }
+.ficha { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 6px; }
+.ficha h3 { font-size: 1.12rem; }
+.ficha p { color: var(--ink-2); font-size: 0.94rem; }
+.aviso { min-height: 3em; font-size: 0.92rem; color: var(--wreath); }
+.leyenda { display: grid; gap: 5px; font-size: 0.88rem; color: var(--ink-2); }
+.leyenda div { display: flex; gap: 8px; align-items: center; }
+.leyenda i { width: 14px; height: 14px; border-radius: 3px; border: 1px solid var(--line); flex: none; }
+.ayuda { font-size: 0.82rem; color: var(--ink-3); }
+
+/* Tablas y listas */
+.tbl { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; font-size: 0.93rem; }
+th { text-align: left; font: 600 0.95rem var(--f-display); color: var(--ink-2); padding: 9px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 8px 12px; border-bottom: 1px solid var(--surface-2); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.grp td { background: var(--surface-2); font: 600 1rem var(--f-display); padding: 7px 12px; }
+tr.grp small { font: 400 0.86rem var(--f-body); color: var(--ink-2); margin-left: 8px; }
+.sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; border: 1px solid var(--line); vertical-align: -1px; margin-right: 7px; }
+.tag { display: inline-block; font: 600 0.74rem var(--f-mono); padding: 1px 7px; border-radius: 4px; white-space: nowrap; }
+.tag.ok { background: var(--ok-bg); color: var(--ok); }
+.tag.warn { background: var(--warn-bg); color: var(--warn); }
+
+.cambios { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.cambio { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.cambio p { font-size: 0.94rem; color: var(--ink-2); }
+.antes { font: 500 0.78rem var(--f-mono); color: var(--ink-3); }
+
+ol.pasos { margin: 0; padding: 0; list-style: none; counter-reset: p; display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+ol.pasos li { counter-increment: p; background: var(--surface); padding: 12px 16px 12px 56px; position: relative; min-width: 0; }
+ol.pasos li::before { content: counter(p); position: absolute; left: 16px; top: 9px; font: 650 1.5rem var(--f-display); color: var(--accent); }
+ol.pasos b { font-weight: 600; }
+ol.pasos span { color: var(--ink-2); }
+.nota { font-size: 0.9rem; color: var(--ink-3); max-width: 90ch; }
+.ajustes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.ajustes div { background: var(--surface); padding: 10px 14px; display: grid; gap: 1px; }
+.ajustes small { font: 500 0.72rem var(--f-mono); color: var(--ink-3); }
+.ajustes b { font-weight: 600; }
+
+@media (max-width: 1020px) {
+  .banco { grid-template-columns: minmax(0, 1fr); }
+  .top { grid-template-columns: minmax(0, 1fr); }
+  .cambios { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ajustes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 620px) {
+  .cambios, .ajustes { grid-template-columns: minmax(0, 1fr); }
+  #lienzo { height: 62vh; min-height: 340px; }
+}
+
+/* Grosor del cartón */
+.grosor { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+.grosor .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.grosor .seg button { border: 0; border-radius: 0; min-width: 64px; background: var(--surface-2); }
+.grosor .seg button + button { border-left: 1px solid var(--line); }
+.grosor .seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.grosor p { font-size: 0.92rem; color: var(--ink-2); flex: 1 1 280px; min-width: 0; }
+.descarga { border: 0; cursor: pointer; font: 600 0.92rem var(--f-body); display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 8px 14px; border-radius: 8px; background: var(--accent); color: var(--accent-ink); font-weight: 600; text-decoration: none; }
+.descarga:hover { filter: brightness(1.08); }
+.descarga[hidden] { display: none; }
+.materiales { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.materiales ul { margin: 0; padding-left: 18px; color: var(--ink-2); font-size: 0.94rem; display: grid; gap: 3px; }
+.materiales b { color: var(--ink); font-weight: 600; }
+
+/* Láminas acotadas */
+h3.grupo-t { margin-top: 10px; }
+.laminas { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); grid-auto-flow: dense; align-items: start; gap: 12px; }
+figure.pieza { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+figure.pieza.doble { grid-column: span 2; }
+figure.pieza.triple { grid-column: span 3; }
+figure.pieza figcaption { display: grid; gap: 1px; }
+figure.pieza figcaption b { font: 600 1rem var(--f-display); }
+figure.pieza figcaption span { font: 500 0.8rem var(--f-mono); color: var(--ink-3); }
+figure.pieza p { font-size: 0.86rem; color: var(--ink-2); }
+.lamina { overflow-x: auto; }
+.lamina { min-height: 40px; }
+.lamina svg { display: block; height: auto; margin: 0 auto; font-family: var(--f-body); }
+.lamina path.corte { fill: var(--kraft); fill-rule: evenodd; stroke: var(--ink); stroke-width: 0.35; }
+.lamina circle.corte { fill: var(--surface); stroke: var(--ink); stroke-width: 0.3; }
+.lamina .opcional { fill: var(--surface); stroke: var(--ink-2); stroke-width: 0.3; stroke-dasharray: 1.4 0.9; }
+.lamina .pliegue { fill: none; stroke: var(--accent); stroke-width: 0.35; stroke-dasharray: 3 1 0.6 1; }
+.lamina .marca { fill: none; stroke: var(--kraft-ink); stroke-width: 0.25; stroke-dasharray: 1 0.8; opacity: 0.85; }
+.lamina .deco { fill: none; stroke: var(--kraft-ink); stroke-width: 0.18; opacity: 0.5; }
+.lamina .cota { fill: none; stroke: var(--ink-3); stroke-width: 0.18; }
+.lamina .txt { fill: var(--ink-2); }
+.lamina .cota-t { fill: var(--accent); font-weight: 600; }
+.leyenda-l { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.86rem; color: var(--ink-2); }
+.leyenda-l span { display: inline-flex; gap: 6px; align-items: center; }
+.leyenda-l svg { width: 30px; height: 10px; }
+@media (max-width: 1020px) { .materiales { grid-template-columns: minmax(0, 1fr); } figure.pieza.triple { grid-column: span 2; } }
+@media (max-width: 620px) { figure.pieza.doble, figure.pieza.triple { grid-column: auto; } }
+</style>
+<div class="page">
+  <header class="top">
+    <div class="top-text">
+      <p class="eyebrow">CS5055 · Sistema de seguridad residencial IoT · versión de cartón</p>
+      <h1>Casita IoT de cartón</h1>
+      <p class="lede">El modelo <span class="mono">casita_iot</span> hecho a mano con cartón corrugado y cartulina, con las mismas medidas por fuera. La base guarda toda la electrónica, la puerta se traba con el servo y cada pieza tiene su plantilla con medidas.</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><b id="s-piezas">0</b><span>piezas que cortar, con plantillas 1:1 en A4</span></div>
+      <div class="stat"><b id="s-bandeja">0</b><span>de lado en la base; la casa mide 100 × 100 × 60 mm</span></div>
+      <div class="stat"><b>0</b><span>choques entre piezas, sensores y módulos</span></div>
+      <div class="stat"><b id="s-trabada">0</b><span>se abre la puerta con el cerrojo puesto</span></div>
+    </div>
+  </header>
+
+  <div class="grosor">
+    <span class="eyebrow">Grosor de su cartón</span>
+    <div class="seg" role="group" aria-label="Grosor del cartón"><button type="button" data-t="2">2 mm</button><button type="button" data-t="3">3 mm</button><button type="button" data-t="4">4 mm</button></div>
+    <p>Mídanlo en el borde de la caja que van a usar. La vista 3D, las medidas y el PDF cambian con el grosor.</p>
+  </div>
+
+  <section aria-label="Visor 3D">
+    <div class="banco">
+      <div class="mesa">
+        <div class="barra">
+          <div class="grupo"><span>Vista</span><div class="fila"><button data-modo="armada" type="button">Armada</button><button data-modo="rayos" type="button">Rayos X</button><button data-modo="despiece" type="button">Despiece</button><button data-modo="corte" type="button">Corte</button></div></div>
+          <div class="grupo"><span>Cámara</span><div class="fila"><button data-vista="frente" type="button">Frente</button><button data-vista="atras" type="button">Atrás</button><button data-vista="arriba" type="button">Arriba</button><button data-vista="puerta" type="button">Puerta</button></div></div>
+          <div class="grupo"><span>Mecanismo</span><div class="fila"><button id="b-puerta" class="accion" type="button">Abrir puerta</button><button id="b-cerrojo" type="button">Poner cerrojo</button></div></div>
+        </div>
+        <canvas id="lienzo" aria-label="Vista 3D de la casita de cartón con la electrónica en la base. Arrastra para girar."></canvas>
+        <div class="corte" id="fila-corte" hidden><label for="r-corte">Plano de corte</label><input id="r-corte" type="range" min="-90" max="90" step="1" value="8"><span id="v-corte" class="mono">x = 8 mm</span></div>
+      </div>
+      <aside class="panel">
+        <div class="ficha"><span class="eyebrow">Señalado</span><h3 id="ficha-nombre">Pasa el cursor por una pieza</h3><p id="ficha-nota">Cada pieza muestra su medida de corte. Usa Rayos X para ver la electrónica.</p></div>
+        <p class="aviso" id="aviso" aria-live="polite"></p>
+        <div class="leyenda">
+          <div><i style="background:#c59a6a"></i>Cartón sin pintar: paredes de la casa</div>
+          <div><i style="background:#1e5aa8"></i>Placas de los módulos</div>
+          <div><i style="background:#2f61d8"></i>Servo SG90</div>
+          <div><i style="background:#f08a24"></i>Cable de 5 V</div>
+          <div><i style="background:#d23b30"></i>Cable de 12 V</div>
+          <div><i style="background:#12a2b3"></i>Cable de señal</div>
+          <div><i style="background:#2b2f33"></i>Cable GND</div>
+        </div>
+        <p class="ayuda">Arrastra para girar, usa la rueda o pellizca para acercar, y clic derecho o Shift para desplazar. Los cables solo muestran el recorrido; las conexiones exactas están en el diagrama de conexiones.</p>
+      </aside>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Qué cambia al pasar a cartón</h2><p>Por fuera se ve como el modelo 3D. Por dentro, cada mecanismo se resolvió con lo que se corta y se pega a mano.</p></div>
+    <div class="cambios">
+      <div class="cambio"><span class="antes">En 3D: bandeja y tapa impresas</span><h3>Una base de dos cajas</h3><p>La bandeja tiene paredes dobles y la tapa es el jardín. Las paredes de la tapa bajan por dentro de la bandeja hasta su piso, con 1 mm de juego por lado, así que se levanta con la casa encima. Dentro quedan <span id="cav" class="mono">152 × 152 × 36</span> mm.</p></div>
+      <div class="cambio"><span class="antes">En 3D: pasador de filamento</span><h3>Bisagra de cinta</h3><p>La hoja de la puerta sale de su propio hueco y gira hacia adentro sobre una tira de cinta masking. El imán del MC-38 va arriba de la hoja y sobresale 9 mm: al cerrar, apoya en la pared y hace de tope.</p></div>
+      <div class="cambio"><span class="antes">En 3D: pestillo impreso</span><h3>Pestillo con el brazo del servo</h3><p>El servo se encastra en el piso de la casa: el cuerpo baja por un agujero y las aletas apoyan arriba. Su brazo de serie, con un taco de cartón, gira detrás de la puerta. Trabada, la puerta se abre unos 4° y no más.</p></div>
+      <div class="cambio"><span class="antes">En 3D: reed junto a la puerta</span><h3>Sensores escondidos</h3><p>Entre la puerta y la ventana quedan 9 mm de pared, y el reed mide 14. Por eso el reed va sobre la puerta. El SW-420 va en la pared izquierda, pegado con silicona. Los vidrios de papel vegetal ocultan el interior.</p></div>
+      <div class="cambio"><span class="antes">En 3D: techo con asiento impreso</span><h3>Techo desmontable</h3><p>Una base, un tapón, dos tímpanos y dos faldones. El tapón entra en la casa con 0,5 mm de juego: el techo no se corre y se saca para llegar al servo y a los sensores.</p></div>
+      <div class="cambio"><span class="antes">En 3D: piezas de colores</span><h3>Decoración de cartulina</h3><p>Árboles en cruz de cartón, marcos, corona, caminito y copos de cartulina. La nieve del techo es de microporoso y se dobla en la cumbrera. El muñeco es de tecnopor y el PIR asoma del jardín como una bola de nieve.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Materiales y herramientas</h2></div>
+    <div class="materiales">
+      <div class="cambio"><h3>Cartón y papel</h3><ul>
+        <li><b>Cartón corrugado de <span class="t-actual">3</span> mm:</b> <span id="m-carton">0</span>, unas dos cajas medianas</li>
+        <li><b>Cartulina</b> blanca, roja, verde, gris y dorada, o blanca y pintada</li>
+        <li><b>Microporoso blanco de 2 mm:</b> 13 × 17 cm para la nieve del techo</li>
+        <li><b>Papel vegetal o acetato:</b> 5 cuadrados de 20 mm</li>
+        <li><b>Tecnopor:</b> 3 bolitas de 15, 10 y 8 mm, o plastilina blanca</li></ul></div>
+      <div class="cambio"><h3>Para pegar y pintar</h3><ul>
+        <li><b>Silicona caliente:</b> pistola y unas 5 barras</li>
+        <li><b>Goma en barra</b> para las cartulinas y las plantillas</li>
+        <li><b>Cinta masking de 12 mm:</b> la bisagra de la puerta</li>
+        <li><b>Cinta doble contacto:</b> módulos de la bandeja e imán</li>
+        <li><b>Témpera o acrílico</b> blanco, rojo y verde</li></ul></div>
+      <div class="cambio"><h3>Herramientas</h3><ul>
+        <li><b>Cúter</b> con cuchilla nueva</li>
+        <li><b>Regla metálica</b> y escuadra</li>
+        <li><b>Base de corte</b> o un cartón grueso debajo</li>
+        <li><b>Punzón o perforadora</b> para los agujeros de 3,5 mm</li>
+        <li><b>Lápiz, tijera y compás</b> para los círculos</li></ul></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Plantillas y medidas</h2><p>Todas las medidas están en mm. Las piezas que dicen «en el PDF» salen a tamaño real: impriman al 100 %, comprueben el cuadrado de 50 mm y peguen la hoja sobre el cartón. Las demás son rectángulos para marcar con regla.</p></div>
+    <div class="grosor">
+      <span class="eyebrow">Cartón de <span class="t-actual">3</span> mm</span>
+      <div class="seg" role="group" aria-label="Grosor del cartón"><button type="button" data-t="2">2 mm</button><button type="button" data-t="3">3 mm</button><button type="button" data-t="4">4 mm</button></div>
+      <button id="pdf" class="descarga" type="button" hidden><span id="pdf-txt">Descargar plantillas 1:1 (PDF, A4)</span></button>
+      <span id="pdf-estado" class="ayuda" aria-live="polite">Los PDF también están en <span class="mono">casita_carton/</span>, junto al proyecto.</span>
+    </div>
+    <div class="leyenda-l" aria-hidden="true">
+      <span><svg viewBox="0 0 30 10"><path d="M1 5H29" stroke="currentColor" stroke-width="1.6"/></svg>Corte</span>
+      <span><svg viewBox="0 0 30 10"><path d="M1 5H29" stroke="currentColor" stroke-width="1.4" stroke-dasharray="4 2.5"/></svg>Corte opcional (MQ-2)</span>
+      <span><svg viewBox="0 0 30 10"><path d="M1 5H29" stroke="var(--accent)" stroke-width="1.4" stroke-dasharray="7 2 1.5 2"/></svg>Doblez</span>
+      <span><svg viewBox="0 0 30 10"><path d="M1 5H29" stroke="var(--kraft-ink)" stroke-width="1.2" stroke-dasharray="2.5 2"/></svg>Marca de lápiz: dónde va otra pieza</span>
+      <span><svg viewBox="0 0 30 10"><path d="M1 5H29M0 7L3 3M27 7L30 3" stroke="var(--ink-3)" stroke-width="1"/></svg>Medida</span>
+    </div>
+    <div id="laminas"></div>
+    <h3 class="grupo-t">Lista de corte</h3>
+    <div class="tbl"><table><thead><tr><th>Pieza</th><th>Material</th><th class="n">Cant.</th><th class="n">Medida (mm)</th><th>Cómo</th></tr></thead><tbody id="lista"></tbody></table></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Dónde va cada componente</h2><p>Medidas de tienda: midan sus módulos antes de pegar. Todo lo de la bandeja va con cinta doble contacto.</p></div>
+    <div class="tbl"><table><thead><tr><th>Componente</th><th>Ubicación y fijación</th><th class="n">Medida</th></tr></thead><tbody id="componentes"></tbody></table></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Armado</h2><p>Prueben cada encaje antes de pegar: un corte a mano se desvía 1 mm con facilidad.</p></div>
+    <ol class="pasos">
+      <li><b>Midan el cartón y elijan el grosor.</b> <span>Impriman el PDF de ese grosor al 100 % y comprueben el cuadrado de 50 mm. Peguen las hojas sobre el cartón con goma en barra.</span></li>
+      <li><b>Corten con cúter y regla metálica.</b> <span>Varias pasadas suaves, no una fuerte. Primero los huecos y después el contorno. Guarden la pieza que sale del hueco de la puerta: es la hoja.</span></li>
+      <li><b>Armen la bandeja.</b> <span>Sobre el piso van las tiras exteriores: las de frente y atrás de largo completo, y las de los lados entre ellas. Las interiores van pegadas por dentro. Prueben la tapa antes de que enfríe la silicona.</span></li>
+      <li><b>Armen la tapa.</b> <span>Con el jardín boca abajo, peguen las paredes de frente y atrás, y los lados entre ellas. La ranura del USB y el agujero del jack se marcan con el ESP32 y el jack en su lugar.</span></li>
+      <li><b>Peguen la casa.</b> <span>Sobre el cuadrado marcado en el jardín: frente y fondo, y los lados entre ellos. Los vidrios van por dentro; los marcos y la corona, por fuera.</span></li>
+      <li><b>Monten la puerta.</b> <span>Una tira de cinta masking por dentro, en el lado izquierdo, desde abajo hasta 22 mm de alto. La hoja debe girar libre, con 0,5 mm de luz a los lados y sobre el umbral.</span></li>
+      <li><b>Peguen los sensores de la puerta.</b> <span>El imán va arriba de la hoja, por dentro, al ras de su borde izquierdo: sobresale 9 mm a la derecha y apoya en la pared al cerrar. El reed va justo encima, en la pared, a 2 mm del imán. El SW-420 va con silicona en la pared izquierda, junto al frente.</span></li>
+      <li><b>Encastren el servo.</b> <span>Pasen el cuerpo por el agujero del piso hasta que las aletas apoyen, y fíjenlas con sus tornillos o con silicona. En reposo, el brazo apunta hacia atrás. Llévenlo a trabado y peguen capas de cartón en su cara hacia la puerta hasta que quede a 1–2 mm de ella.</span></li>
+      <li><b>Monten la electrónica.</b> <span>Calza y shield atrás a la izquierda, protoboard al centro, LM2596 atrás a la derecha y relé adelante a la derecha. Dejen unos 10 cm de cable de sobra: la tapa se levanta con la casa.</span></li>
+      <li><b>Cierren con el techo y la decoración.</b> <span>Tapón centrado bajo la base, tímpanos en los extremos, faldones encima y la nieve doblada en la cumbrera. Después, chimenea, árboles, muñeco, regalos y caminito sobre sus marcas.</span></li>
+    </ol>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Comprobaciones</h2><p>Hechas sobre estas mismas piezas, con cartón de <span class="t-actual">3</span> mm y las medidas de tienda de cada módulo.</p></div>
+    <div class="tbl"><table><thead><tr><th>Prueba</th><th>Resultado</th></tr></thead><tbody id="checks-t"></tbody></table></div>
+    <p class="nota">No se probó con cartón real ni la fuerza del servo contra la puerta. El generador y los PDF están en <span class="mono">casita_carton/</span>, junto al proyecto.</p>
+  </section>
+</div>
+<script type="application/json" id="checks">{
+ "2": {
+  "t": 2,
+  "choques": [],
+  "puerta": {
+   "libre": {
+    "angulo": 92,
+    "contra": "Casa: pared del frente"
+   },
+   "trabada": {
+    "angulo": 4.25,
+    "contra": "Taco del brazo"
+   },
+   "juegoBorde": 1.4
+  },
+  "barrido": null,
+  "holguras": {
+   "tapaBandeja": 1,
+   "tapon": 0.5,
+   "servoRele": 3.3,
+   "usbSobreBorde": 2.2,
+   "jackSobreBorde": 7,
+   "puertaUmbral": 0.5
+  },
+  "ventanas": [],
+  "A4": [
+   {
+    "id": "b_ext_la",
+    "cabe": true
+   },
+   {
+    "id": "b_int_la",
+    "cabe": true
+   },
+   {
+    "id": "t_techo",
+    "cabe": true
+   },
+   {
+    "id": "t_pared_at",
+    "cabe": true
+   },
+   {
+    "id": "t_pared_iz",
+    "cabe": true
+   },
+   {
+    "id": "c_frente",
+    "cabe": true
+   },
+   {
+    "id": "c_fondo",
+    "cabe": true
+   },
+   {
+    "id": "c_lado_de",
+    "cabe": true
+   },
+   {
+    "id": "c_lado_iz",
+    "cabe": true
+   },
+   {
+    "id": "marco_v",
+    "cabe": true
+   },
+   {
+    "id": "marco_p",
+    "cabe": true
+   },
+   {
+    "id": "corona",
+    "cabe": true
+   },
+   {
+    "id": "lazo",
+    "cabe": true
+   },
+   {
+    "id": "r_timpano",
+    "cabe": true
+   },
+   {
+    "id": "r_nieve",
+    "cabe": true
+   },
+   {
+    "id": "r_chimenea",
+    "cabe": true
+   },
+   {
+    "id": "arbol_g_a",
+    "cabe": true
+   },
+   {
+    "id": "arbol_g_b",
+    "cabe": true
+   },
+   {
+    "id": "arbol_c_a",
+    "cabe": true
+   },
+   {
+    "id": "arbol_c_b",
+    "cabe": true
+   },
+   {
+    "id": "estrella",
+    "cabe": true
+   },
+   {
+    "id": "caminito",
+    "cabe": true
+   },
+   {
+    "id": "copo",
+    "cabe": true
+   }
+  ],
+  "piezas": 37,
+  "solidos": 90
+ },
+ "3": {
+  "t": 3,
+  "choques": [],
+  "puerta": {
+   "libre": {
+    "angulo": 92,
+    "contra": "Casa: pared del frente"
+   },
+   "trabada": {
+    "angulo": 4.25,
+    "contra": "Taco del brazo"
+   },
+   "juegoBorde": 1.4
+  },
+  "barrido": null,
+  "holguras": {
+   "tapaBandeja": 1,
+   "tapon": 0.5,
+   "servoRele": 2.3,
+   "usbSobreBorde": 4.2,
+   "jackSobreBorde": 7,
+   "puertaUmbral": 0.5
+  },
+  "ventanas": [],
+  "A4": [
+   {
+    "id": "b_ext_la",
+    "cabe": true
+   },
+   {
+    "id": "b_int_la",
+    "cabe": true
+   },
+   {
+    "id": "t_techo",
+    "cabe": true
+   },
+   {
+    "id": "t_pared_at",
+    "cabe": true
+   },
+   {
+    "id": "t_pared_iz",
+    "cabe": true
+   },
+   {
+    "id": "c_frente",
+    "cabe": true
+   },
+   {
+    "id": "c_fondo",
+    "cabe": true
+   },
+   {
+    "id": "c_lado_de",
+    "cabe": true
+   },
+   {
+    "id": "c_lado_iz",
+    "cabe": true
+   },
+   {
+    "id": "marco_v",
+    "cabe": true
+   },
+   {
+    "id": "marco_p",
+    "cabe": true
+   },
+   {
+    "id": "corona",
+    "cabe": true
+   },
+   {
+    "id": "lazo",
+    "cabe": true
+   },
+   {
+    "id": "r_timpano",
+    "cabe": true
+   },
+   {
+    "id": "r_nieve",
+    "cabe": true
+   },
+   {
+    "id": "r_chimenea",
+    "cabe": true
+   },
+   {
+    "id": "arbol_g_a",
+    "cabe": true
+   },
+   {
+    "id": "arbol_g_b",
+    "cabe": true
+   },
+   {
+    "id": "arbol_c_a",
+    "cabe": true
+   },
+   {
+    "id": "arbol_c_b",
+    "cabe": true
+   },
+   {
+    "id": "estrella",
+    "cabe": true
+   },
+   {
+    "id": "caminito",
+    "cabe": true
+   },
+   {
+    "id": "copo",
+    "cabe": true
+   }
+  ],
+  "piezas": 37,
+  "solidos": 87
+ },
+ "4": {
+  "t": 4,
+  "choques": [],
+  "puerta": {
+   "libre": {
+    "angulo": 92,
+    "contra": "Casa: pared del frente"
+   },
+   "trabada": {
+    "angulo": 4.25,
+    "contra": "Taco del brazo"
+   },
+   "juegoBorde": 1.4
+  },
+  "barrido": null,
+  "holguras": {
+   "tapaBandeja": 1,
+   "tapon": 0.5,
+   "servoRele": 1.3,
+   "usbSobreBorde": 4.2,
+   "jackSobreBorde": 7,
+   "puertaUmbral": 0.5
+  },
+  "ventanas": [],
+  "A4": [
+   {
+    "id": "b_ext_la",
+    "cabe": true
+   },
+   {
+    "id": "b_int_la",
+    "cabe": true
+   },
+   {
+    "id": "t_techo",
+    "cabe": true
+   },
+   {
+    "id": "t_pared_at",
+    "cabe": true
+   },
+   {
+    "id": "t_pared_iz",
+    "cabe": true
+   },
+   {
+    "id": "c_frente",
+    "cabe": true
+   },
+   {
+    "id": "c_fondo",
+    "cabe": true
+   },
+   {
+    "id": "c_lado_de",
+    "cabe": true
+   },
+   {
+    "id": "c_lado_iz",
+    "cabe": true
+   },
+   {
+    "id": "marco_v",
+    "cabe": true
+   },
+   {
+    "id": "marco_p",
+    "cabe": true
+   },
+   {
+    "id": "corona",
+    "cabe": true
+   },
+   {
+    "id": "lazo",
+    "cabe": true
+   },
+   {
+    "id": "r_timpano",
+    "cabe": true
+   },
+   {
+    "id": "r_nieve",
+    "cabe": true
+   },
+   {
+    "id": "r_chimenea",
+    "cabe": true
+   },
+   {
+    "id": "arbol_g_a",
+    "cabe": true
+   },
+   {
+    "id": "arbol_g_b",
+    "cabe": true
+   },
+   {
+    "id": "arbol_c_a",
+    "cabe": true
+   },
+   {
+    "id": "arbol_c_b",
+    "cabe": true
+   },
+   {
+    "id": "estrella",
+    "cabe": true
+   },
+   {
+    "id": "caminito",
+    "cabe": true
+   },
+   {
+    "id": "copo",
+    "cabe": true
+   }
+  ],
+  "piezas": 37,
+  "solidos": 85
+ }
+}</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const Carton = (() => {
+// Casita IoT de cartón: todas las piezas y la electrónica salen de aquí, en mm.
+// z = 0 es el jardín (cara de arriba de la tapa); +y es la parte trasera; +x, la derecha.
+// Cada sólido es un contorno plano (u, v) extruido th mm a lo largo de N = U × V desde el punto o.
+// Las medidas exteriores del modelo casita_iot se mantienen; lo que depende del grosor t se recalcula.
+
+const GROSORES = [2, 3, 4];
+const X = [1, 0, 0], Y = [0, 1, 0], Z = [0, 0, 1];
+const neg = (v) => v.map((c) => -c);
+const cruz = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const rect = (u0, v0, u1, v1) => [[u0, v0], [u1, v0], [u1, v1], [u0, v1]];
+const circulo = (cu, cv, r, n = 40) => Array.from({ length: n }, (_, i) => [cu + r * Math.cos((2 * Math.PI * i) / n), cv + r * Math.sin((2 * Math.PI * i) / n)]);
+const agC = (cu, cv, r, extra = {}) => ({ pts: circulo(cu, cv, r), c: [cu, cv], r, ...extra });
+const agR = (u0, v0, u1, v1, extra = {}) => ({ pts: rect(u0, v0, u1, v1), ...extra });
+const sol = (o, U, V, th, extra = {}) => ({ o, U, V, N: cruz(U, V), th, ...extra });
+const cotaH = (u0, u1, v, d) => ({ a: [u0, v], b: [u1, v], off: [0, d] });
+const cotaV = (v0, v1, u, d) => ({ a: [u, v0], b: [u, v1], off: [d, 0] });
+const mover = (pts, du, dv) => pts.map(([u, v]) => [u + du, v + dv]);
+
+// Rejilla de 7 agujeros de 3,5 mm: uno al centro y seis en un círculo de 8,5 mm
+const rejilla = (cu, cv, giro = 0, extra = {}) => [agC(cu, cv, 1.75, extra), ...Array.from({ length: 6 }, (_, k) => {
+  const a = giro + (k * Math.PI) / 3; return agC(cu + 8.5 * Math.cos(a), cv + 8.5 * Math.sin(a), 1.75, extra);
+})];
+
+// Copo de nieve: seis brazos con un rombo; los agujeros de la rejilla caen entre los brazos
+function copo(cu, cv, giro) {
+  const pts = [], w = 1, L = 10.5;
+  for (let k = 0; k < 6; k++) {
+    const th = giro + (k * Math.PI) / 3, d = [Math.cos(th), Math.sin(th)], p = [-d[1], d[0]];
+    const P = (r, s) => [cu + r * d[0] + s * p[0], cv + r * d[1] + s * p[1]];
+    const ent = th - Math.PI / 6;
+    pts.push([cu + 2 * w * Math.cos(ent), cv + 2 * w * Math.sin(ent)]);
+    pts.push(P(5.2, -w), P(7, -2), P(8.8, -w), P(L - 0.8, -w), P(L, 0), P(L - 0.8, w), P(8.8, w), P(7, 2), P(5.2, w));
+  }
+  return pts;
+}
+
+// Árbol de tres pisos, de perfil: medio ancho por altura, de abajo hacia arriba
+function perfilArbol(k) {
+  return [[4, 0], [4, 5 * k], [11 * k, 5 * k], [5.5 * k, 12.5 * k], [8.5 * k, 12.5 * k], [4 * k, 19.5 * k], [6 * k, 19.5 * k], [0, 31 * k]];
+}
+function estrella(cu, cv, r = 4, ri = 1.7) {
+  return Array.from({ length: 10 }, (_, i) => { const a = Math.PI / 2 + (i * Math.PI) / 5, rr = i % 2 ? ri : r; return [cu + rr * Math.cos(a), cv + rr * Math.sin(a)]; });
+}
+
+// Goteo de la nieve: ondas de 16 mm con gotas de 3 a 6 mm
+function goteo(u) {
+  const prof = [4, 6, 3, 5, 4, 6, 3, 5];
+  const i = Math.min(7, Math.floor(u / 16)), x = (u - i * 16) / 16;
+  return x > 0.2 && x < 0.8 ? prof[i] * Math.sin(((x - 0.2) / 0.6) * Math.PI) : 0;
+}
+
+function modelo(t = 3) {
+  const a = 79 - t;               // cara interior de las paredes de la tapa
+  const f = -42 + t;              // cara de arriba del piso de la bandeja
+  const T = 160 + 4 * t;          // lado exterior de la bandeja: tapa de 158 + 1 mm de juego por lado + dos capas de pared
+  const hT = 18 - t;              // alto de las tiras de la bandeja
+  const hC = 42 - 2 * t;          // alto de las paredes de la tapa (apoyan en el piso de la bandeja)
+  const nCalza = Math.ceil(7 / t), calza = nCalza * t;
+  const SL = Math.hypot(62, 36), cA = 62 / SL, sA = 36 / SL, tA = 36 / 62;
+  const z0 = 60 + t;              // cara de arriba de la base del techo
+  const Ws = 76;                  // ancho de cada faldón: 71,7 mm hasta el borde + 4,3 mm de alero
+  const zA = z0 + 36 + t / cA;    // cumbrera exterior de los faldones
+  const Ln = Ws + t * tA + 1;     // nieve: desde la cumbrera hasta 1 mm más allá del faldón
+  const zNieve = (y) => zA + 2 / cA - Math.abs(y) * tA;
+  const zChim = zA + 2 / cA + 6;
+  const xs = 17, ys = -50 + t + 1 + 6.1; // eje del servo
+  const piv = [-9.75, -50 + t];          // bisagra de cinta: borde interior de la jamba izquierda
+  const zu = f + calza + 14.7;           // centro del USB del ESP32
+  const cxE = -a + 0.5 + 31.5;           // centro del shield en x
+  const zMq = -12 - t / 2;               // centro de la rejilla lateral del MQ-2
+
+  const piezas = [];
+  const pieza = (p) => { p.solidos = p.solidos.map((s) => ({ contorno: p.forma.contorno, agujeros: p.forma.agujeros || [], ...s })); piezas.push(p); return p; };
+
+  // ── Bandeja: piso y dos capas de tiras. La capa interior guía la tapa con 1 mm de juego por lado.
+  pieza({ id: 'b_piso', nom: 'Piso de la bandeja', mat: 'corrugado', col: 'nieve', cant: 1, grupo: 'bandeja',
+    forma: { contorno: rect(0, 0, T, T), cotas: [cotaH(0, T, 0, -8), cotaV(0, T, 0, -8)] },
+    solidos: [sol([-T / 2, -T / 2, -42], X, Y, t)] });
+  const muesca = (L, h) => {
+    const r = 13, cy = h + 5, a0 = Math.atan2(-5, 12), a1 = Math.atan2(-5, -12), pts = [[0, 0], [L, 0], [L, h]];
+    for (let i = 0; i <= 16; i++) { const ang = a0 + ((a1 - a0) * i) / 16; pts.push([L / 2 + r * Math.cos(ang), cy + r * Math.sin(ang)]); }
+    pts.push([0, h]); return pts;
+  };
+  const tira = (id, nom, L, notch, sols, nota) => pieza({ id, nom, mat: 'corrugado', col: 'nieve', cant: 2, grupo: 'bandeja', nota, plantilla: notch,
+    forma: { contorno: notch ? muesca(L, hT) : rect(0, 0, L, hT), cotas: [cotaH(0, L, 0, -6), cotaV(0, hT, L, 6), ...(notch ? [cotaH(L / 2 - 12, L / 2 + 12, hT, 5)] : [])],
+      rotulos: notch ? [{ p: [L / 2, hT / 2 - 3], txt: 'muesca para levantar la tapa' }] : [] },
+    solidos: sols });
+  const Ti = T - 2 * t;
+  tira('b_ext_fa', 'Tira exterior, frente y atrás', T, false, [sol([-T / 2, -T / 2 + t, f], X, Z, t), sol([T / 2, T / 2 - t, f], neg(X), Z, t)]);
+  tira('b_ext_la', 'Tira exterior, lados', T - 2 * t, true, [sol([T / 2 - t, -T / 2 + t, f], Y, Z, t), sol([-T / 2 + t, T / 2 - t, f], neg(Y), Z, t)], 'Va entre las tiras de frente y atrás.');
+  tira('b_int_fa', 'Tira interior, frente y atrás', Ti, false, [sol([-Ti / 2, -Ti / 2 + t, f], X, Z, t), sol([Ti / 2, Ti / 2 - t, f], neg(X), Z, t)], 'Se pega por dentro de la capa exterior.');
+  tira('b_int_la', 'Tira interior, lados', Ti - 2 * t, true, [sol([Ti / 2 - t, -Ti / 2 + t, f], Y, Z, t), sol([-Ti / 2 + t, Ti / 2 - t, f], neg(Y), Z, t)], 'Su cara interior debe quedar a 160 mm de la del otro lado.');
+
+  // ── Tapa: es el jardín. Sus paredes bajan por dentro de la bandeja hasta el piso.
+  const L0 = (x, y) => [x + 79, y + 79];
+  const [pu, pv] = L0(42, -62);
+  const [bu, bv] = L0(62, 30);
+  const agTapa = [
+    agC(pu, pv, 11.8, { nom: 'PIR', lab: 'dentro' }),
+    agR(xs - 6.4 + 79, ys - 6.6 + 79, xs + 17.6 + 79, ys + 6.6 + 79, { nom: 'Servo', lab: 'dentro' }),
+    ...rejilla(bu, bv, 0, { grupoNom: 'Buzzer', labP: [157, bv - 14], ancla: 'end' }),
+    agC(...L0(-42, 6), 4, { nom: 'Cables SW-420', lab: 'der' }),
+    agC(...L0(41, -26), 4, { nom: 'Cables reed', lab: 'izq' }),
+  ];
+  const cruzArbol = (x, y, r) => { const [u, v] = L0(x, y); return [{ pts: [[u - r, v], [u + r, v]] }, { pts: [[u, v - r], [u, v + r]] }]; };
+  pieza({ id: 't_techo', nom: 'Tapa: jardín', mat: 'corrugado', col: 'nieve', cant: 1, grupo: 'tapa', plantilla: true, pos: true,
+    nota: 'Corten los agujeros antes de pegar las paredes. Las líneas punteadas son marcas de lápiz para ubicar la casa y la decoración.',
+    forma: {
+      contorno: rect(0, 0, 158, 158), agujeros: agTapa,
+      marcas: [{ pts: rect(29, 29, 129, 129), cerrado: true }, { pts: rect(69, 0, 89, 28.5), cerrado: true },
+        ...cruzArbol(66, -58, 11), ...cruzArbol(-66, -60, 8.25), { pts: circulo(...L0(-62, 40), 7.5, 24), cerrado: true },
+        { pts: rect(35, 9, 43, 17), cerrado: true }, { pts: rect(46, 4, 52, 10), cerrado: true },
+        { pts: copo(...L0(-62, -22), Math.PI / 6), cerrado: true }, { pts: copo(bu, bv, Math.PI / 6), cerrado: true }],
+      rotulos: [{ p: [79, 136], txt: 'casa: 100 × 100' }, { p: [79, 33], txt: 'frente de la casa' }, { p: [79, -14], txt: 'FRENTE' },
+        { p: L0(66, -58 - 15), txt: 'árbol grande' }, { p: L0(-66, -60 - 12), txt: 'árbol chico' }, { p: L0(-62, 40 + 11), txt: 'muñeco' },
+        { p: [47, 20], txt: 'regalos' }, { p: [79, 14], txt: 'caminito' }, { p: [146, bv + 15], txt: 'buzzer bajo el copo' },
+        { p: L0(-62, -22 + 14), txt: 'copo decorativo' }],
+      cotas: [cotaH(0, 158, 0, -8), cotaV(0, 158, 0, -8), cotaH(0, 29, 150, 0), cotaV(0, 29, 100, 0)],
+    },
+    solidos: [sol([-79, -79, -t], X, Y, t)] });
+
+  const usb = agR(79 - cxE - 6.5, zu - 4.5 - f, 79 - cxE + 6.5, zu + 4.5 - f, { nom: 'USB', verificar: true });
+  const jack = agC(79 - 60, -13 - f, 4, { nom: 'Jack', verificar: true });
+  const bordeBandeja = { pts: [[0, -24 - f], [158, -24 - f]] };
+  pieza({ id: 't_pared_fr', nom: 'Tapa: pared del frente', mat: 'corrugado', col: 'nieve', cant: 1, grupo: 'tapa',
+    forma: { contorno: rect(0, 0, 158, hC), cotas: [cotaH(0, 158, 0, -6), cotaV(0, hC, 158, 6)] },
+    solidos: [sol([-79, -79 + t, f], X, Z, t)] });
+  pieza({ id: 't_pared_at', nom: 'Tapa: pared trasera', mat: 'corrugado', col: 'nieve', cant: 1, grupo: 'tapa', plantilla: true, pos: true,
+    nota: 'Vista desde atrás. Marquen el USB con el ESP32 en su lugar: la altura depende del shield.',
+    forma: { contorno: rect(0, 0, 158, hC), agujeros: [usb, jack], marcas: [bordeBandeja],
+      rotulos: [{ p: [80, -24 - f - 2.5], txt: 'borde de la bandeja' }],
+      cotas: [cotaH(0, 158, 0, -6), cotaV(0, hC, 158, 6)] },
+    solidos: [sol([79, 79 - t, f], neg(X), Z, t)] });
+  pieza({ id: 't_pared_de', nom: 'Tapa: pared derecha', mat: 'corrugado', col: 'nieve', cant: 1, grupo: 'tapa',
+    forma: { contorno: rect(0, 0, 158 - 2 * t, hC), cotas: [cotaH(0, 158 - 2 * t, 0, -6), cotaV(0, hC, 158 - 2 * t, 6)] },
+    solidos: [sol([79 - t, -79 + t, f], Y, Z, t)] });
+  pieza({ id: 't_pared_iz', nom: 'Tapa: pared izquierda', mat: 'corrugado', col: 'nieve', cant: 1, grupo: 'tapa', plantilla: true,
+    nota: 'La rejilla es para el MQ-2 opcional: córtenla solo si lo usan.',
+    forma: { contorno: rect(0, 0, 158 - 2 * t, hC), agujeros: rejilla(101 - t, zMq - f, Math.PI / 6, { opcional: true, grupoNom: 'MQ-2', labP: [101 - t + 12, zMq - f + 1.5], ancla: 'start' }), marcas: [{ pts: [[0, -24 - f], [158 - 2 * t, -24 - f]] }],
+      rotulos: [{ p: [101 - t, zMq - f + 13], txt: 'rejilla MQ-2 (opcional)' }],
+      cotas: [cotaH(0, 158 - 2 * t, 0, -6), cotaV(0, hC, 158 - 2 * t, 6)] },
+    solidos: [sol([-79 + t, 79 - t, f], neg(Y), Z, t)] });
+  pieza({ id: 'calza', nom: 'Calza del shield', mat: 'corrugado', col: 'carton', cant: nCalza, grupo: 'bandeja',
+    nota: `${nCalza} capas pegadas (${calza} mm): suben el USB del ESP32 por encima del borde de la bandeja.`,
+    forma: { contorno: rect(0, 0, 63, 66), cotas: [cotaH(0, 63, 0, -6), cotaV(0, 66, 63, 6)] },
+    solidos: Array.from({ length: nCalza }, (_, k) => sol([-a + 0.5, a - 66.5, f + k * t], X, Y, t)) });
+
+  // ── Casa: frente y fondo de 100 mm; los lados van entre ellos.
+  const Ls = 100 - 2 * t;
+  const cadenaH = (cortes, v, d) => cortes.slice(1).map((u, i) => cotaH(cortes[i], u, v, d));
+  const cadenaV = (cortes, u, d) => cortes.slice(1).map((v, i) => cotaV(cortes[i], v, u, d));
+  pieza({ id: 'c_frente', nom: 'Casa: pared del frente', mat: 'corrugado', col: 'madera', cant: 1, grupo: 'casa', plantilla: true,
+    nota: 'Vista desde afuera. La puerta se corta y se guarda: es la hoja. Las marcas punteadas van por dentro.',
+    forma: { contorno: rect(0, 0, 100, 60),
+      agujeros: [agR(40, 3, 60, 38, { nom: 'Puerta', guardar: true }), agR(13, 25, 31, 43, { nom: 'Ventana' }), agR(69, 25, 87, 43, { nom: 'Ventana' })],
+      marcas: [{ pts: rect(39, 39.5, 67, 53.5), cerrado: true }, { pts: rect(35, 3.5, 40, 22), cerrado: true }, { pts: rect(60, 23.5, 68.5, 37.5), cerrado: true }],
+      rotulos: [{ p: [53, 46.5], txt: 'reed (dentro)' }, { p: [50, 20.5], txt: 'puerta' }, { p: [50, 16.5], txt: 'guardar' }, { p: [50, 0.8], txt: 'umbral 3', tam: 0.75 }, { p: [27, 14], txt: 'bisagra →', tam: 0.75 }, { p: [77, 20], txt: '← tope del imán', tam: 0.75 }],
+      cotas: [...cadenaH([0, 13, 31, 40, 60, 69, 87, 100], 60, 6), cotaH(0, 100, 0, -6), ...cadenaV([0, 25, 43, 60], 100, 6), cotaV(3, 38, 57, 0)] },
+    solidos: [sol([-50, -50 + t, 0], X, Z, t)] });
+  pieza({ id: 'c_fondo', nom: 'Casa: pared del fondo', mat: 'corrugado', col: 'madera', cant: 1, grupo: 'casa', plantilla: true,
+    forma: { contorno: rect(0, 0, 100, 60), agujeros: [agR(41, 25, 59, 43, { nom: 'Ventana' })],
+      cotas: [...cadenaH([0, 41, 59, 100], 60, 6), cotaH(0, 100, 0, -6), ...cadenaV([0, 25, 43, 60], 100, 6)] },
+    solidos: [sol([50, 50 - t, 0], neg(X), Z, t)] });
+  pieza({ id: 'c_lado_de', nom: 'Casa: pared derecha', mat: 'corrugado', col: 'madera', cant: 1, grupo: 'casa', plantilla: true,
+    nota: 'Va entre el frente y el fondo.',
+    forma: { contorno: rect(0, 0, Ls, 60), agujeros: [agR(41 - t, 25, 59 - t, 43, { nom: 'Ventana' })],
+      cotas: [...cadenaH([0, 41 - t, 59 - t, Ls], 60, 6), cotaH(0, Ls, 0, -6), ...cadenaV([0, 25, 43, 60], Ls, 6)] },
+    solidos: [sol([50 - t, -50 + t, 0], Y, Z, t)] });
+  pieza({ id: 'c_lado_iz', nom: 'Casa: pared izquierda', mat: 'corrugado', col: 'madera', cant: 1, grupo: 'casa', plantilla: true,
+    nota: 'Va entre el frente y el fondo. El SW-420 se pega por dentro, junto al frente.',
+    forma: { contorno: rect(0, 0, Ls, 60), agujeros: [agR(41 - t, 25, 59 - t, 43, { nom: 'Ventana' })],
+      marcas: [{ pts: rect(66 - 2 * t, 5, 98 - 2 * t, 19), cerrado: true }], rotulos: [{ p: [82 - 2 * t, 10.5], txt: 'SW-420 (dentro)' }],
+      cotas: [...cadenaH([0, 41 - t, 59 - t, Ls], 60, 6), cotaH(0, Ls, 0, -6), ...cadenaV([0, 25, 43, 60], Ls, 6)] },
+    solidos: [sol([-50 + t, 50 - t, 0], neg(Y), Z, t)] });
+  pieza({ id: 'c_puerta', nom: 'Hoja de la puerta', mat: 'corrugado', col: 'rojo', cant: 1, grupo: 'puerta',
+    nota: 'Sale del hueco de la pared del frente: recórtenla 0,5 mm por lado.',
+    forma: { contorno: rect(0, 0, 19, 34), cotas: [cotaH(0, 19, 0, -5), cotaV(0, 34, 19, 5)] },
+    solidos: [sol([-9.5, -50 + t, 3.5], X, Z, t)] });
+
+  // ── Detalles de cartulina sobre la casa
+  const marcoVentana = [[0, 0], [28, 0], [28, 2.5], [26.5, 2.5], [26.5, 26.5], [1.5, 26.5], [1.5, 2.5], [0, 2.5]];
+  pieza({ id: 'marco_v', nom: 'Marco de ventana', mat: 'cartulina', col: 'blanco', cant: 5, grupo: 'casa', plantilla: true,
+    forma: { contorno: marcoVentana, agujeros: [agR(5, 5, 13.2, 13.2), agR(14.8, 5, 23, 13.2), agR(5, 14.8, 13.2, 23), agR(14.8, 14.8, 23, 23)],
+      cotas: [cotaH(0, 28, 0, -5), cotaV(0, 26.5, 28, 5)] },
+    solidos: [sol([-42, -50, 20], X, Z, 0.5), sol([14, -50, 20], X, Z, 0.5), sol([14, 50, 20], neg(X), Z, 0.5), sol([50, -14, 20], Y, Z, 0.5), sol([-50, 14, 20], neg(Y), Z, 0.5)] });
+  pieza({ id: 'marco_p', nom: 'Marco de la puerta', mat: 'cartulina', col: 'blanco', cant: 1, grupo: 'casa', plantilla: true,
+    forma: { contorno: [[0, 0], [3, 0], [3, 38], [23, 38], [23, 0], [26, 0], [26, 41], [0, 41]], cotas: [cotaH(0, 26, 41, 5), cotaV(0, 41, 26, 5), cotaH(3, 23, 19, 0)] },
+    solidos: [sol([-13, -50, 0], X, Z, 0.5)] });
+  const vid = (o, U, w) => sol(o, U, Z, 0.2, { contorno: rect(0, 0, w, 20) });
+  pieza({ id: 'vidrio', nom: 'Vidrio', mat: 'acetato', col: 'vidrio', cant: 5, grupo: 'casa',
+    nota: 'Papel vegetal o acetato lijado: deja pasar luz y oculta los sensores. Los dos del frente miden 19,5 × 20.',
+    forma: { contorno: rect(0, 0, 20, 20), cotas: [cotaH(0, 20, 0, -5), cotaV(0, 20, 20, 5)] },
+    solidos: [vid([-38, -50 + t + 0.2, 24], X, 19.5), vid([18.5, -50 + t + 0.2, 24], X, 19.5), vid([10, 50 - t - 0.2, 24], neg(X), 20),
+      vid([50 - t - 0.2, -10, 24], Y, 20), vid([-50 + t + 0.2, 10, 24], neg(Y), 20)] });
+  const moño = [[7, 0.6], [4.2, -1.6], [3.6, 0.6], [4.2, 2.6], [7, 1.2], [9.8, 2.6], [10.4, 0.6], [9.8, -1.6]];
+  pieza({ id: 'corona', nom: 'Corona', mat: 'cartulina', col: 'verde', cant: 1, grupo: 'puerta', plantilla: true,
+    nota: 'Lleva un moño rojo abajo.',
+    forma: { contorno: circulo(7, 7, 7, 36), agujeros: [agC(7, 7, 3.5)], cotas: [cotaH(0, 14, 7, 0)] },
+    solidos: [sol([-7, -50, 21], X, Z, 0.5)] });
+  pieza({ id: 'lazo', nom: 'Moño de la corona', mat: 'cartulina', col: 'rojo', cant: 1, grupo: 'puerta', plantilla: true,
+    forma: { contorno: moño }, solidos: [sol([-7, -50.5, 21], X, Z, 0.5)] });
+
+  // ── Techo desmontable: base, tapón que lo centra, dos tímpanos y dos faldones
+  const sTap = 100 - 2 * t - 1;
+  pieza({ id: 'r_base', nom: 'Techo: base', mat: 'corrugado', col: 'rojo', cant: 1, grupo: 'techo',
+    forma: { contorno: rect(0, 0, 124, 124), cotas: [cotaH(0, 124, 0, -6), cotaV(0, 124, 124, 6)] },
+    solidos: [sol([-62, -62, 60], X, Y, t)] });
+  pieza({ id: 'r_tapon', nom: 'Techo: tapón', mat: 'corrugado', col: 'carton', cant: 1, grupo: 'techo',
+    nota: 'Va pegado bajo la base, centrado: entra en la casa con 0,5 mm de juego y evita que el techo se corra.',
+    forma: { contorno: rect(0, 0, sTap, sTap), cotas: [cotaH(0, sTap, 0, -6), cotaV(0, sTap, sTap, 6)] },
+    solidos: [sol([-sTap / 2, -sTap / 2, 60 - t], X, Y, t)] });
+  pieza({ id: 'r_timpano', nom: 'Techo: tímpano', mat: 'corrugado', col: 'rojo', cant: 2, grupo: 'techo', plantilla: true,
+    nota: 'Uno en cada extremo de la base, al ras del borde.',
+    forma: { contorno: [[0, 0], [124, 0], [62, 36]], cotas: [cotaH(0, 124, 0, -6), cotaV(0, 36, 62, 0)] },
+    solidos: [sol([62 - t, -62, z0], Y, Z, t), sol([-62 + t, 62, z0], neg(Y), Z, t)] });
+  const Vb = [0, cA, -sA], Vf = [0, -cA, -sA];
+  pieza({ id: 'r_faldon', nom: 'Techo: faldón', mat: 'corrugado', col: 'rojo', cant: 2, grupo: 'techo',
+    nota: 'Apoya en los tímpanos y sobresale 4 mm de la base como alero.',
+    forma: { contorno: rect(0, 0, 124, Ws), cotas: [cotaH(0, 124, 0, -6), cotaV(0, Ws, 124, 6)] },
+    solidos: [sol([-62, 0, z0 + 36], X, Vb, t), sol([62, 0, z0 + 36], neg(X), Vf, t)] });
+  const mitadNieve = [[0, 0], [128, 0]];
+  for (let u = 128; u >= 0; u -= 1) mitadNieve.push([u, Ln + goteo(u)]);
+  const Lm = Ln + 7, plantNieve = [];
+  for (let u = 0; u <= 128; u += 1) plantNieve.push([u, Lm - Ln - goteo(u)]);
+  for (let u = 128; u >= 0; u -= 1) plantNieve.push([u, Lm + Ln + goteo(u)]);
+  pieza({ id: 'r_nieve', nom: 'Nieve del techo', mat: 'microporoso', col: 'nieve', cant: 1, grupo: 'techo', plantilla: true,
+    nota: 'Una sola pieza que se dobla en la cumbrera y tapa la unión de los faldones.',
+    forma: { contorno: plantNieve, pliegues: [[[0, Lm], [128, Lm]]], rotulos: [{ p: [64, Lm + 3], txt: 'doblar: cumbrera' }],
+      cotas: [cotaH(0, 128, Lm - Ln - 6, -4), cotaV(Lm, Lm + Ln, 128, 6)] },
+    solidos: [sol([-64, 0, zA], X, Vb, 2, { contorno: mitadNieve }), sol([64, 0, zA], neg(X), Vf, 2, { contorno: mitadNieve })] });
+  const hf = zChim - zNieve(5), hb = zChim - zNieve(23), H = hb;
+  const red = [[0, H - hf], [18, H - hf], [36, 0], [54, 0], [72, H - hf], [72, H - hf + 1], [77, H - hf + 2.5], [77, H - 2.5], [72, H - 1], [72, H], [0, H]];
+  const ladrillos = [];
+  for (let v = H - 4, fila = 0; v > 0.5; v -= 4, fila++) {
+    ladrillos.push({ pts: [[0, v], [72, v]], recortar: true });
+    for (let u = fila % 2 ? 3 : 0; u < 72; u += 6) ladrillos.push({ pts: [[u, v], [u, v + 4]], recortar: true });
+  }
+  pieza({ id: 'r_chimenea', nom: 'Chimenea', mat: 'cartulina', col: 'ladrillo', cant: 1, grupo: 'techo', plantilla: true,
+    nota: 'Se dobla en tubo de 18 × 18 mm; la pestaña va por dentro. El borde inclinado apoya en la pendiente de la nieve.',
+    forma: { contorno: red, pliegues: [18, 36, 54, 72].map((u) => [[u, u === 72 ? H - hf : u === 18 ? H - hf : 0], [u, H]]), deco: ladrillos,
+      cotas: [cotaH(0, 72, H, 5), cotaV(H - hf, H, 0, -5), cotaV(0, H, 45, 0)] },
+    solidos: [sol([-37, 0, 0], Y, Z, 18, { contorno: [[5, zNieve(5)], [23, zNieve(23)], [23, zChim], [5, zChim]], agujeros: [] })] });
+  pieza({ id: 'r_chim_tapa', nom: 'Chimenea: tapa', mat: 'corrugado', col: 'ladrillo', cant: 1, grupo: 'techo',
+    forma: { contorno: rect(0, 0, 22, 22), cotas: [cotaH(0, 22, 0, -5), cotaV(0, 22, 22, 5)] },
+    solidos: [sol([-39, 3, zChim], X, Y, t)] });
+
+  // ── Jardín
+  const arbol = (id, nom, cx, cy, k) => {
+    const P = perfilArbol(k), W = 2 * P[2][0], Hh = P[P.length - 1][1];
+    const A = [...P.map(([u, v]) => [W / 2 + u, v]), ...P.slice(0, -1).reverse().map(([u, v]) => [W / 2 - u, v])];
+    const tope = Hh - (t / 2) * (Hh - P[6][1]) / P[6][0];
+    const B = [[0, 0], ...P.slice(0, -1).map(([u, v]) => [u - t / 2, v]), [0, tope]];
+    pieza({ id: `${id}_a`, nom: `${nom}: pieza A`, mat: 'corrugado', col: 'verde', cant: 1, grupo: 'jardin', plantilla: true,
+      forma: { contorno: A, cotas: [cotaH(0, W, 0, -5), cotaV(0, Hh, W, 5)], rotulos: [{ p: [W / 2, Hh * 0.38], txt: 'A' }] },
+      solidos: [sol([cx - W / 2, cy + t / 2, 0], X, Z, t)] });
+    pieza({ id: `${id}_b`, nom: `${nom}: media pieza B`, mat: 'corrugado', col: 'verde', cant: 2, grupo: 'jardin', plantilla: true,
+      nota: 'Una a cada lado de A, en cruz.',
+      forma: { contorno: B, cotas: [cotaV(0, tope, 0, -5)], rotulos: [{ p: [B[3][0] * 0.45, Hh * 0.3], txt: 'B' }] },
+      solidos: [sol([cx - t / 2, cy + t / 2, 0], Y, Z, t), sol([cx + t / 2, cy - t / 2, 0], neg(Y), Z, t)] });
+    return { cx, cy, Hh };
+  };
+  const ag = arbol('arbol_g', 'Árbol grande', 66, -58, 1), ac = arbol('arbol_c', 'Árbol chico', -66, -60, 0.75);
+  pieza({ id: 'estrella', nom: 'Estrella', mat: 'cartulina', col: 'oro', cant: 2, grupo: 'jardin', plantilla: true,
+    forma: { contorno: estrella(4, 4) },
+    solidos: [ag, ac].map((q) => sol([q.cx - 4, q.cy - t / 2, q.Hh - 2], X, Z, 0.5)) });
+  const piedras = [];
+  [7.1, 14.2, 21.3].forEach((v, i) => { piedras.push({ pts: [[0, v + (i % 2 ? 0.8 : -0.6)], [7, v], [13, v + 0.9], [20, v - 0.4]] }); });
+  [[0, 7.1, 9], [1, 14.2, 6], [1, 14.2, 14], [2, 21.3, 10], [3, 28.5, 5], [3, 28.5, 14]].forEach(([i, v, u]) => piedras.push({ pts: [[u, v - 7.1], [u + 0.6, v]] }));
+  pieza({ id: 'caminito', nom: 'Caminito', mat: 'cartulina', col: 'piedra', cant: 1, grupo: 'jardin', plantilla: true,
+    nota: 'Las líneas de las piedras son solo dibujo: impriman esta hoja en cartulina gris o píntenlas.',
+    forma: { contorno: rect(0, 0, 20, 28.5), deco: piedras, cotas: [cotaH(0, 20, 0, -5), cotaV(0, 28.5, 20, 5)] },
+    solidos: [sol([-10, -79, 0], X, Y, 0.5)] });
+  pieza({ id: 'copo', nom: 'Copo de nieve', mat: 'cartulina', col: 'blanco', cant: 2, grupo: 'jardin', plantilla: true,
+    nota: 'Uno sobre la rejilla del buzzer, con el agujero central encima del agujero central; el otro es decorativo.',
+    forma: { contorno: copo(11, 11, Math.PI / 6), agujeros: [agC(11, 11, 1.75)], cotas: [cotaH(11 - 10.5 * Math.cos(Math.PI / 6), 11 + 10.5 * Math.cos(Math.PI / 6), 0, -4)] },
+    solidos: [[62, 30], [-62, -22]].map(([x, y]) => sol([x - 11, y - 11, 0], X, Y, 0.5)) });
+  const n1 = Math.max(1, Math.round(8 / t)), n2 = Math.max(1, Math.round(6 / t));
+  pieza({ id: 'regalo_g', nom: 'Regalo grande', mat: 'corrugado', col: 'oro', cant: n1, grupo: 'jardin', nota: `${n1} cuadrados pegados; luego se forran o se pintan.`,
+    forma: { contorno: rect(0, 0, 8, 8), cotas: [cotaH(0, 8, 0, -4)] },
+    solidos: Array.from({ length: n1 }, (_, k) => sol([-44, -70, k * t], X, Y, t)) });
+  pieza({ id: 'regalo_c', nom: 'Regalo chico', mat: 'corrugado', col: 'rojo', cant: n2, grupo: 'jardin', nota: `${n2} cuadrados pegados.`,
+    forma: { contorno: rect(0, 0, 6, 6), cotas: [cotaH(0, 6, 0, -4)] },
+    solidos: Array.from({ length: n2 }, (_, k) => sol([-33, -75, k * t], X, Y, t)) });
+
+  // Medidas a la vista para la tabla de corte
+  for (const p of piezas) {
+    const us = p.forma.contorno.map((q) => q[0]), vs = p.forma.contorno.map((q) => q[1]);
+    p.ancho = Math.max(...us) - Math.min(...us); p.alto = Math.max(...vs) - Math.min(...vs);
+    p.grosor = p.mat === 'corrugado' ? t : p.mat === 'microporoso' ? 2 : p.mat === 'acetato' ? 0.2 : 0.5;
+  }
+
+  // ── Electrónica. partes: lo que se dibuja; env: el volumen que se comprueba (cajas [a, b] o cilindros).
+  const caja = (a0, b0, mat, nom) => ({ tipo: 'caja', a: a0, b: b0, mat, nom });
+  const cil = (c, r, h0, h1, eje, mat, nom) => ({ tipo: 'cil', c, r, h0, h1, eje, mat, nom });
+  const yS0 = a - 66.5, xS0 = -a + 0.5, zS = f + calza;
+  const yP0 = a - 82.5;
+  const xL0 = a - 21.5;
+  const modulos = [
+    { id: 'shield', nom: 'Shield con ESP32', grupo: 'bandeja', medida: '63 × 66 × 18 mm',
+      nota: `Atrás a la izquierda, sobre la calza de ${calza} mm, con el USB contra la pared trasera.`,
+      env: [caja([xS0, yS0, zS], [xS0 + 63, yS0 + 66, zS + 18])],
+      partes: [caja([xS0, yS0, zS], [xS0 + 63, yS0 + 66, zS + 1.6], 'pcbNegro', 'Shield de borneras'),
+        ...[xS0 + 1.5, xS0 + 59.5].flatMap((x) => Array.from({ length: 12 }, (_, i) => caja([x - 1.5, yS0 + 3 + i * 5.1, zS + 1.6], [x + 1.5, yS0 + 7.8 + i * 5.1, zS + 11.6], 'borneraAzul', 'Borneras del shield'))),
+        ...[cxE - 13, cxE + 13].map((x) => caja([x - 1.3, yS0 + 13, zS + 1.6], [x + 1.3, a - 2.5, zS + 10.1], 'negro', 'Zócalos del ESP32')),
+        caja([cxE - 14, yS0 + 12, zS + 10.1], [cxE + 14, a - 1.5, zS + 11.7], 'pcbNegro', 'ESP32 DevKit V1'),
+        caja([cxE - 9, yS0 + 14, zS + 11.7], [cxE + 9, yS0 + 32, zS + 14.9], 'plata', 'Módulo ESP-WROOM-32'),
+        caja([cxE - 3.8, a - 6, zu - 1.5], [cxE + 3.8, a - 0.5, zu + 1.5], 'plata', 'Puerto USB del ESP32')] },
+    { id: 'proto', nom: 'Protoboard', grupo: 'bandeja', medida: '55 × 82 × 8,5 mm', nota: 'Al centro, contra la pared trasera. Reparte 5 V, 3,3 V y GND.',
+      env: [caja([-10, yP0, f], [45, a - 0.5, f + 8.5])], partes: [caja([-10, yP0, f], [45, a - 0.5, f + 8.5], 'proto', 'Protoboard de 400 puntos')] },
+    { id: 'cables', nom: 'Cables Dupont sobre la protoboard', grupo: 'bandeja', virtual: true, medida: 'hasta 26 mm sobre el piso',
+      env: [caja([-10, yP0, f + 8.5], [45, a - 0.5, f + 26])], partes: [] },
+    { id: 'c1', nom: 'Capacitor C1, 1000 µF', grupo: 'bandeja', medida: 'Ø 10 × 20 mm', nota: 'En la protoboard, junto a la llegada del LM2596.',
+      env: [cil([38, a - 14], 5, f + 8.5, f + 28.5, 'z')], partes: [cil([38, a - 14], 5, f + 8.5, f + 28.5, 'z', 'capacitor', 'Capacitor C1, 1000 µF')] },
+    { id: 'lm2596', nom: 'LM2596', grupo: 'bandeja', medida: '21 × 43 × 15 mm', nota: 'Atrás a la derecha. Ajústenlo a 5,0 V antes de conectar nada.',
+      env: [caja([xL0, 10, f], [xL0 + 21, 53, f + 14.8])],
+      partes: [caja([xL0, 10, f + 1.5], [xL0 + 21, 53, f + 3.1], 'pcbAzul', 'Convertidor LM2596'), cil([xL0 + 10.5, 26], 6.3, f + 3.1, f + 10.3, 'z', 'negro', 'Bobina del LM2596'),
+        cil([xL0 + 6, 41], 3.2, f + 3.1, f + 12.1, 'z', 'negro', 'Capacitor del LM2596'), cil([xL0 + 15, 41], 3.2, f + 3.1, f + 12.1, 'z', 'negro', 'Capacitor del LM2596'),
+        caja([xL0 + 7, 14, f + 3.1], [xL0 + 14, 19, f + 9], 'borneraAzul', 'Trimmer del LM2596: ajustar a 5,0 V')] },
+    { id: 'jack', nom: 'Jack DC de 12 V', grupo: 'tapa', medida: 'Ø 8 mm de rosca', nota: 'En la pared trasera de la tapa, sobre el borde de la bandeja.',
+      env: [cil([60, -13], 5, a - 22, a, 'y'), cil([60, -13], 6.3, 79, 81, 'y')],
+      partes: [cil([60, -13], 5, a - 22, a, 'y', 'negro', 'Jack DC de 12 V'), cil([60, -13], 6.3, 79, 81, 'y', 'plata', 'Tuerca del jack')] },
+    { id: 'rele', nom: 'Relé de 2 canales', grupo: 'bandeja', medida: '50 × 41 × 21 mm', nota: 'Adelante a la derecha, bajo el servo, con 2 mm de aire.',
+      env: [caja([23, -48.5, f], [73, -7.5, f + 20.8])],
+      partes: [caja([23, -48.5, f + 1.5], [73, -7.5, f + 3.1], 'pcbAzul', 'Módulo de relés de 2 canales'),
+        ...[-45, -26].map((y0) => caja([36, y0, f + 3.1], [55, y0 + 15, f + 18.6], 'azulRele', 'Relé')),
+        ...[-46, -27].map((y0) => caja([61, y0, f + 3.1], [71, y0 + 15, f + 13], 'borneraAzul', 'Borneras del relé (COM, NO, NC)')),
+        caja([24, -37, f + 3.1], [26.6, -19, f + 11.6], 'negro', 'Entrada del relé (IN1, DC+, DC−)'), caja([28, -43, f + 3.1], [31, -39, f + 6], 'amarillo', 'Jumper en H')] },
+    { id: 'pir', nom: 'PIR HC-SR501', grupo: 'tapa', medida: '32 × 24 mm, domo Ø 23 mm', nota: 'Pegado bajo el jardín con silicona por los bordes. El domo asoma como una bola de nieve.',
+      env: [caja([26, -74, -t - 9.1], [58, -50, -t]), caja([38, -56, -t - 25], [46, -51, -t - 3.1]), cil([42, -62], 11.5, -t, -t + 11.5, 'z')],
+      partes: [caja([26, -74, -t - 3.1], [58, -50, -t - 1.5], 'pcbVerde', 'PIR HC-SR501'), caja([30, -74, -t - 1.5], [54, -50, -t], 'lente', 'PIR HC-SR501'),
+        caja([32, -70, -t - 9.1], [52, -54, -t - 3.1], 'negro', 'PIR: componentes'), caja([38, -56, -t - 25], [46, -51, -t - 3.1], 'negro', 'PIR: conector Dupont'),
+        { tipo: 'domo', c: [42, -62, -t], r: 11.4, mat: 'lente', nom: 'Domo del PIR' }] },
+    { id: 'buzzer', nom: 'Buzzer SFM-20B', grupo: 'tapa', medida: 'Ø 23 × 12 mm', nota: 'Pegado bajo el copo derecho, que hace de rejilla.',
+      env: [cil([62, 30], 11.5, -t - 12, -t, 'z'), caja([59, 15, -t - 1.5], [65, 45, -t])],
+      partes: [cil([62, 30], 11.5, -t - 12, -t, 'z', 'negro', 'Buzzer SFM-20B'), caja([59, 15, -t - 1.5], [65, 45, -t], 'negro', 'Orejas del buzzer')] },
+    { id: 'mq2', nom: 'MQ-2 (opcional)', grupo: 'tapa', opcional: true, medida: '32 × 22 mm, sensor Ø 20 mm', nota: 'De pie contra la pared izquierda de la tapa, con el sensor frente a la rejilla lateral.',
+      env: [caja([-a + 15, -33, f], [-a + 16.6, -11, f + 32]), cil([-22, zMq], 10, -a + 0.5, -a + 15, 'x'), caja([-a + 16.6, -26, f + 2], [-a + 36, -18, f + 10])],
+      partes: [caja([-a + 15, -33, f], [-a + 16.6, -11, f + 32], 'pcbAzul', 'MQ-2'), cil([-22, zMq], 10, -a + 0.5, -a + 15, 'x', 'plata', 'MQ-2: sensor'),
+        caja([-a + 16.6, -26, f + 2], [-a + 36, -18, f + 10], 'negro', 'MQ-2: conector Dupont')] },
+    { id: 'servo', nom: 'Servo SG90', grupo: 'tapa', medida: '23 × 12 × 23 mm, aletas de 32 mm', nota: 'Encastrado en el piso de la casa: el cuerpo baja por el agujero y las aletas apoyan arriba.',
+      env: [caja([xs - 5.9, ys - 6.1, -15.9], [xs + 17.1, ys + 6.1, 6.8]), caja([xs - 10.4, ys - 6.1, 0], [xs + 21.6, ys + 6.1, 2.5]), cil([xs, ys], 5.9, 6.8, 10.8, 'z')],
+      partes: [caja([xs - 5.9, ys - 6.1, -15.9], [xs + 17.1, ys + 6.1, 6.8], 'servo', 'Servo SG90'), caja([xs - 10.4, ys - 6.1, 0], [xs + 21.6, ys + 6.1, 2.5], 'servo', 'Aletas del servo'),
+        cil([xs, ys], 5.9, 6.8, 10.8, 'z', 'servo', 'Servo SG90'), cil([xs, ys], 2.4, 10.8, 11.2, 'z', 'blanco', 'Eje del servo')] },
+    { id: 'reed', nom: 'MC-38: reed', grupo: 'casa', medida: '28 × 14 × 8 mm', nota: 'Sobre la puerta, por dentro, a 2 mm del imán.',
+      env: [caja([-11, -50 + t, 39.5], [17, -42 + t, 53.5])], partes: [caja([-11, -50 + t, 39.5], [17, -42 + t, 53.5], 'blanco', 'MC-38: reed')] },
+    { id: 'sw420', nom: 'SW-420', grupo: 'casa', medida: '32 × 14 × 8 mm + conector', nota: 'Pared izquierda, junto al frente. Con silicona: la cinta de espuma amortigua los golpes.',
+      env: [caja([-50 + t, -48 + t, 5], [-42 + t, -16 + t, 19]), caja([-49 + t, -16 + t, 9], [-44 + t, 4 + t, 15])],
+      partes: [caja([-50 + t, -48 + t, 5], [-48.4 + t, -16 + t, 19], 'pcbAzul', 'SW-420'), cil([-28 + t, 12], 2.4, -48.4 + t, -42 + t, 'x', 'negro', 'SW-420: sensor'),
+        caja([-48.4 + t, -40 + t, 7], [-43 + t, -34 + t, 13], 'borneraAzul', 'SW-420: potenciómetro'), caja([-49 + t, -16 + t, 9], [-44 + t, 4 + t, 15], 'negro', 'SW-420: conector Dupont')] },
+  ];
+  // Lo que se mueve: la hoja (con imán, corona y moño) gira en la bisagra; el brazo gira en el eje del servo.
+  const iman = { id: 'iman', nom: 'MC-38: imán', grupo: 'puerta', medida: '28 × 14 × 8 mm', nota: 'Arriba de la hoja, por dentro. Sobresale 9 mm de la puerta y hace de tope contra la pared.',
+    env: [caja([-9.5, -50 + t, 23.5], [18.5, -42 + t, 37.5])], partes: [caja([-9.5, -50 + t, 23.5], [18.5, -42 + t, 37.5], 'blanco', 'MC-38: imán')] };
+  // Brazo en coordenadas propias: eje en el origen, apuntando a +x; el taco mira a la puerta cuando gira 180°.
+  const brazo = { zi: 11, zs: 13, largo: 17, taco: { u0: 5, u1: 12, v0: 2.2, v1: 5.7 },
+    env: [{ tipo: 'poli', pts: [[0, -3], [17, -2], [17, 2], [0, 3]], h0: 11, h1: 13 }, { tipo: 'poli', pts: circulo(0, 0, 3.6, 20), h0: 10.8, h1: 14.5 },
+      { tipo: 'poli', pts: rect(5, 2.2, 12, 5.7), h0: 10.5, h1: 13.5 }] };
+  const meca = { bisagra: piv, servo: [xs, ys], brazo, libre: 90, trabado: 180, umbral: 3 };
+
+  // Jardín que no es de cartón
+  const deco = [
+    ...[[7.5, 7], [5, 17], [4, 24.5]].map(([r, z]) => ({ tipo: 'esfera', c: [-62, 40, z], r, mat: 'tecnopor', nom: 'Muñeco de tecnopor' })),
+    { tipo: 'cil', c: [-62, 40], r: 4.2, h0: 27.8, h1: 28.4, eje: 'z', mat: 'negro', nom: 'Sombrero' }, { tipo: 'cil', c: [-62, 40], r: 2.6, h0: 28.4, h1: 32, eje: 'z', mat: 'negro', nom: 'Sombrero' },
+    { tipo: 'cono', c: [-62, 36.2, 24.8], r: 0.8, h: 3, mat: 'naranja', nom: 'Nariz de zanahoria' },
+    { tipo: 'caja', a: [-44, -66.6, 0], b: [-36, -65.4, n1 * t + 0.3], mat: 'rojo', nom: 'Cinta del regalo' }, { tipo: 'caja', a: [-40.6, -70, 0], b: [-39.4, -62, n1 * t + 0.3], mat: 'rojo', nom: 'Cinta del regalo' },
+    { tipo: 'caja', a: [-33, -72.5, 0], b: [-27, -71.5, n2 * t + 0.3], mat: 'oro', nom: 'Cinta del regalo' },
+  ];
+
+  return { t, a, f, T, hT, hC, calza, nCalza, z0, zA, zChim, Ws, Ln, sTap, n1, n2, usb: { x: cxE, z: zu }, zMq, piezas, modulos, iman, meca, deco,
+    resumen: { bandeja: T, tapa: 158, cavidad: [2 * a, 2 * a, hC], casa: [100, 100, 60], techo: zChim + t } };
+}
+
+return { modelo, GROSORES };
+})();
+const Dibujo = (() => {
+// Dibuja la plantilla de una pieza en SVG, en mm, con sus cotas. La usan el PDF 1:1 y la página.
+// Clases: corte, opcional, pliegue, marca, deco, cota, txt, tit, sub.
+
+const fmt = (x) => { const v = Math.round(x * 2) / 2; return (Number.isInteger(v) ? String(v) : v.toFixed(1)).replace('.', ','); };
+const f1 = (x) => (Math.round(x * 10) / 10).toFixed(1).replace('.', ',').replace(/,0$/, '');
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const MAT = { corrugado: 'cartón corrugado', cartulina: 'cartulina', microporoso: 'microporoso 2 mm', acetato: 'acetato' };
+
+// Medidas del dibujo antes de colocarlo: caja de la pieza más cotas y rótulos
+function medir(p, fs, titulo = '') {
+  const F = p.forma, us = F.contorno.map((q) => q[0]), vs = F.contorno.map((q) => q[1]);
+  let u0 = Math.min(...us), u1 = Math.max(...us), v0 = Math.min(...vs), v1 = Math.max(...vs);
+  for (const c of F.cotas || []) for (const q of [c.a, c.b]) {
+    const x = q[0] + c.off[0] + Math.sign(c.off[0]) * fs * 1.4, y = q[1] + c.off[1] + Math.sign(c.off[1]) * fs * 1.4;
+    u0 = Math.min(u0, x); u1 = Math.max(u1, x); v0 = Math.min(v0, y); v1 = Math.max(v1, y);
+  }
+  for (const r of F.rotulos || []) { const w = String(r.txt).length * fs * 0.27; u0 = Math.min(u0, r.p[0] - w); u1 = Math.max(u1, r.p[0] + w); v0 = Math.min(v0, r.p[1] - fs); v1 = Math.max(v1, r.p[1] + fs); }
+  const m = fs * 0.6, cab = titulo ? fs * 2.4 : 0;
+  u1 = Math.max(u1, u0 + titulo.length * fs * 0.6);
+  return { u0: u0 - m, u1: u1 + m, v0: v0 - m, v1: v1 + m + cab, w: u1 - u0 + 2 * m, h: v1 - v0 + 2 * m + cab, cab };
+}
+
+function titulo(p, copias = 1) {
+  return p.nom + (p.cant > 1 ? (copias > 1 ? ` · ${copias} copias` : ` · cortar ${p.cant}`) : '');
+}
+function svgPieza(p, { fs = 2.6, copias = 1, conTitulo = true } = {}) {
+  const F = p.forma, tit = conTitulo ? titulo(p, copias) : '', M = medir(p, fs, tit);
+  const X = (u) => u - M.u0, Yv = (v) => M.v1 - v;
+  const d = (pts, cerrar = true) => pts.map((q, i) => `${i ? 'L' : 'M'}${X(q[0]).toFixed(2)} ${Yv(q[1]).toFixed(2)}`).join('') + (cerrar ? 'Z' : '');
+  const o = [];
+  if (conTitulo) {
+    o.push(`<text class="tit" x="0" y="${(fs * 1.05).toFixed(2)}" font-size="${(fs * 1.12).toFixed(2)}">${esc(tit)}</text>`);
+    o.push(`<text class="sub" x="0" y="${(fs * 2.1).toFixed(2)}" font-size="${(fs * 0.82).toFixed(2)}">${esc(MAT[p.mat] || p.mat)}${p.mat === 'corrugado' ? ` de ${fmt(p.grosor)} mm` : ''}</text>`);
+  }
+  // decoración impresa, recortada al contorno por puntos
+  for (const l of F.deco || []) {
+    const segs = []; let cur = [];
+    const [a, b] = [l.pts[0], l.pts[l.pts.length - 1]];
+    const n = Math.max(2, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 0.5));
+    const pts = l.recortar ? Array.from({ length: n + 1 }, (_, i) => [a[0] + ((b[0] - a[0]) * i) / n, a[1] + ((b[1] - a[1]) * i) / n]) : l.pts;
+    for (const q of pts) { if (!l.recortar || dentro(F.contorno, q[0], q[1])) cur.push(q); else { if (cur.length > 1) segs.push(cur); cur = []; } }
+    if (cur.length > 1) segs.push(cur);
+    for (const s of segs) o.push(`<path class="deco" d="${d(s, false)}"/>`);
+  }
+  o.push(`<path class="corte" d="${d(F.contorno)}${(F.agujeros || []).filter((g) => !g.opcional).map((g) => (g.r ? '' : d(g.pts))).join('')}" fill-rule="evenodd"/>`);
+  for (const g of F.agujeros || []) {
+    if (g.r) o.push(`<circle class="${g.opcional ? 'opcional' : 'corte'}" cx="${X(g.c[0]).toFixed(2)}" cy="${Yv(g.c[1]).toFixed(2)}" r="${g.r}"/>`);
+    else if (g.opcional) o.push(`<path class="opcional" d="${d(g.pts)}"/>`);
+  }
+  for (const pl of F.pliegues || []) o.push(`<path class="pliegue" d="${d(pl, false)}"/>`);
+  for (const mk of F.marcas || []) o.push(`<path class="marca" d="${d(mk.pts, !!mk.cerrado)}"/>`);
+  const T = (u, v, txt, k = 1, extra = '') => o.push(`<text class="txt" x="${X(u).toFixed(2)}" y="${(Yv(v) + fs * 0.35 * k).toFixed(2)}" font-size="${(fs * k).toFixed(2)}" text-anchor="middle"${extra}>${esc(txt)}</text>`);
+  // agujeros con nombre: medida, posición desde la esquina inferior izquierda y dónde va el texto
+  const vistos = new Set(), u00 = minU(F), v00 = minV(F);
+  const lineas = (u, v, ls, ancla, k) => ls.forEach((l, i) => o.push(`<text class="txt" x="${X(u).toFixed(2)}" y="${(Yv(v) + fs * k * (0.35 + 1.15 * i)).toFixed(2)}" font-size="${(fs * k).toFixed(2)}" text-anchor="${ancla}">${esc(l)}</text>`));
+  for (const g of F.agujeros || []) {
+    if (g.grupoNom && vistos.has(g.grupoNom)) continue;
+    if (!g.nom && !g.grupoNom) continue;
+    let cu, cv, w, h;
+    if (g.r) { cu = g.c[0]; cv = g.c[1]; w = h = 2 * g.r; } else {
+      const us = g.pts.map((q) => q[0]), vs = g.pts.map((q) => q[1]);
+      cu = (Math.min(...us) + Math.max(...us)) / 2; cv = (Math.min(...vs) + Math.max(...vs)) / 2; w = Math.max(...us) - Math.min(...us); h = Math.max(...vs) - Math.min(...vs);
+    }
+    if (g.guardar) continue;
+    const ls = [];
+    if (g.grupoNom) { vistos.add(g.grupoNom); const n = F.agujeros.filter((q) => q.grupoNom === g.grupoNom).length; ls.push(`${n} × Ø${f1(w)}${g.opcional ? ' (opcional)' : ''}`); }
+    else ls.push(`${g.nom} ${g.r ? `Ø${f1(w)}` : `${fmt(w)} × ${fmt(h)}`}`);
+    if (p.pos || g.grupoNom) ls.push(`centro ${fmt(cu - u00)}; ${fmt(cv - v00)}`);
+    if (g.verificar) ls.push('verificar en sitio');
+    const k = 0.72, alto = ls.length * fs * k * 1.15;
+    const lab = g.lab || (w > fs * 9 && h > alto + 2 ? 'dentro' : 'abajo');
+    if (g.labP) lineas(g.labP[0], g.labP[1], ls, g.ancla || 'middle', k);
+    else if (lab === 'dentro') lineas(cu, cv + alto / 2 - fs * k * 0.6, ls, 'middle', k);
+    else if (lab === 'abajo') lineas(cu, cv - h / 2 - fs * 0.9, ls, 'middle', k);
+    else if (lab === 'arriba') lineas(cu, cv + h / 2 + alto + fs * 0.1, ls, 'middle', k);
+    else if (lab === 'der') lineas(cu + w / 2 + 1.5, cv + alto / 2 - fs * k * 0.6, ls, 'start', k);
+    else lineas(cu - w / 2 - 1.5, cv + alto / 2 - fs * k * 0.6, ls, 'end', k);
+  }
+  for (const r of F.rotulos || []) T(r.p[0], r.p[1], r.txt, 0.78 * (r.tam || 1));
+  for (const c of F.cotas || []) cota(o, c, X, Yv, fs);
+  return { svg: o.join(''), w: M.w, h: M.h };
+}
+const minU = (F) => Math.min(...F.contorno.map((q) => q[0]));
+const minV = (F) => Math.min(...F.contorno.map((q) => q[1]));
+function dentro(pts, u, v) {
+  let d = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { const [ui, vi] = pts[i], [uj, vj] = pts[j]; if (vi > v !== vj > v && u < ((uj - ui) * (v - vi)) / (vj - vi) + ui) d = !d; }
+  return d;
+}
+function cota(o, c, X, Yv, fs) {
+  const L = Math.hypot(c.b[0] - c.a[0], c.b[1] - c.a[1]);
+  if (L < 0.5) return;
+  const a = [c.a[0] + c.off[0], c.a[1] + c.off[1]], b = [c.b[0] + c.off[0], c.b[1] + c.off[1]];
+  const sg = [Math.sign(c.off[0]), Math.sign(c.off[1])], ext = (q, r) => `M${X(q[0]).toFixed(2)} ${Yv(q[1]).toFixed(2)}L${X(r[0] + sg[0] * 1).toFixed(2)} ${Yv(r[1] + sg[1] * 1).toFixed(2)}`;
+  const vert = Math.abs(c.b[0] - c.a[0]) < 1e-6;
+  let p = '';
+  if (c.off[0] || c.off[1]) p += ext(c.a, a) + ext(c.b, b);
+  p += `M${X(a[0]).toFixed(2)} ${Yv(a[1]).toFixed(2)}L${X(b[0]).toFixed(2)} ${Yv(b[1]).toFixed(2)}`;
+  // marcas oblicuas en los extremos
+  for (const q of [a, b]) p += `M${(X(q[0]) - 0.9).toFixed(2)} ${(Yv(q[1]) + 0.9).toFixed(2)}L${(X(q[0]) + 0.9).toFixed(2)} ${(Yv(q[1]) - 0.9).toFixed(2)}`;
+  o.push(`<path class="cota" d="${p}"/>`);
+  const mu = (a[0] + b[0]) / 2, mv = (a[1] + b[1]) / 2, k = 0.82, txt = c.txt || fmt(L);
+  const lado = vert ? (sg[0] || -1) : (sg[1] || 1);
+  if (vert) {
+    const x = X(mu) + lado * fs * 0.45 * (lado > 0 ? 1.9 : 1), y = Yv(mv);
+    o.push(`<text class="txt cota-t" x="${x.toFixed(2)}" y="${y.toFixed(2)}" font-size="${(fs * k).toFixed(2)}" text-anchor="middle" transform="rotate(-90 ${x.toFixed(2)} ${y.toFixed(2)})">${txt}</text>`);
+  } else {
+    const y = Yv(mv) + (lado > 0 ? -fs * 0.35 : fs * 0.95);
+    o.push(`<text class="txt cota-t" x="${X(mu).toFixed(2)}" y="${y.toFixed(2)}" font-size="${(fs * k).toFixed(2)}" text-anchor="middle">${txt}</text>`);
+  }
+}
+
+return { svgPieza, fmt };
+})();
+// Página de la casita de cartón: visor 3D, plantillas acotadas y tablas. Todo sale de Carton.modelo(t).
+const $ = (id) => document.getElementById(id);
+const CHK = JSON.parse($('checks').textContent);
+const css = (k) => getComputedStyle(document.documentElement).getPropertyValue(k).trim();
+const { modelo, GROSORES } = Carton;
+const { svgPieza, fmt } = Dibujo;
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const f1 = (x) => (Math.round(x * 10) / 10).toFixed(1).replace('.', ',').replace(/,0$/, '');
+let guardado = 3;
+try { const g = +localStorage.getItem('casita-carton-t'); if (GROSORES.includes(g)) guardado = g; } catch {}
+
+// ── Escena
+const lienzo = $('lienzo');
+const ren = new THREE.WebGLRenderer({ canvas: lienzo, antialias: true, preserveDrawingBuffer: true });
+ren.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+ren.shadowMap.enabled = true; ren.shadowMap.type = THREE.PCFSoftShadowMap;
+ren.outputEncoding = THREE.sRGBEncoding; ren.localClippingEnabled = true;
+const escena = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(30, 1, 2, 5000); cam.up.set(0, 0, 1);
+escena.add(new THREE.HemisphereLight(0xf4f8ff, 0x8a7a68, 0.62));
+const sol = new THREE.DirectionalLight(0xffffff, 0.78); sol.position.set(170, -230, 360);
+sol.castShadow = true; sol.shadow.mapSize.set(2048, 2048);
+Object.assign(sol.shadow.camera, { left: -220, right: 220, top: 220, bottom: -220, near: 50, far: 1000 }); sol.shadow.bias = -0.0005; sol.shadow.normalBias = 0.5;
+escena.add(sol);
+const relleno = new THREE.DirectionalLight(0xdfe8ff, 0.25); relleno.position.set(-200, 160, 120); escena.add(relleno);
+const mesa = new THREE.Mesh(new THREE.PlaneGeometry(1600, 1600), new THREE.ShadowMaterial({ opacity: 0.16 }));
+mesa.position.z = -42.05; mesa.receiveShadow = true; escena.add(mesa);
+
+// Colores de pintura y canto de cartón
+const COL = { nieve: 0xf1f4f6, madera: 0xc59a6a, carton: 0xb98a5c, rojo: 0xa3372b, verde: 0x2f7a4a, blanco: 0xf6f1e4, ladrillo: 0xa3563f, piedra: 0xa8a196, oro: 0xd6a33a, vidrio: 0xe6eef2 };
+const CANTO = { nieve: 0xd9d4ca, madera: 0xa9814f, carton: 0x9c7349, rojo: 0x86302a, verde: 0x2a6a41, ladrillo: 0x8a4835, oro: 0xb98a2e };
+const plano = new THREE.Plane(new THREE.Vector3(-1, 0, 0), 8);
+const matsCarton = new Map();
+function matCarton(col, canto) {
+  const k = `${col}|${canto}`;
+  if (!matsCarton.has(k)) {
+    const vid = col === 'vidrio';
+    const mk = (c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.86, metalness: 0, side: THREE.DoubleSide, transparent: vid, opacity: vid ? 0.72 : 1, clippingPlanes: [], clipShadows: true });
+    matsCarton.set(k, [mk(COL[col]), mk(canto ? (CANTO[col] ?? COL[col]) : COL[col])]);
+  }
+  return matsCarton.get(k);
+}
+const mE = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: o.r ?? 0.55, metalness: o.m ?? 0.05, clippingPlanes: [] });
+const tx = (() => { const c = document.createElement('canvas'); c.width = 220; c.height = 328; const g = c.getContext('2d');
+  g.fillStyle = '#f3f2ec'; g.fillRect(0, 0, 220, 328); g.fillStyle = '#5b5e60';
+  for (let i = 0; i < 30; i++) for (let j = 0; j < 10; j++) g.fillRect(48 + j * 13 + (j > 4 ? 14 : 0), 14 + i * 10.4, 3, 3);
+  for (const x of [12, 22, 190, 200]) for (let i = 0; i < 30; i++) g.fillRect(x, 14 + i * 10.4, 3, 3);
+  g.fillStyle = '#d83b2f'; g.fillRect(6, 6, 2, 316); g.fillRect(206, 6, 2, 316); g.fillStyle = '#2f5fd0'; g.fillRect(29, 6, 2, 316); g.fillRect(184, 6, 2, 316);
+  const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return t; })();
+const ME = { pcbAzul: mE(0x1e5aa8), pcbVerde: mE(0x2d7d46), pcbNegro: mE(0x1d2226), negro: mE(0x18191b, { r: 0.4 }), plata: mE(0xc5ccd2, { r: 0.3, m: 0.7 }), blanco: mE(0xf2f2ec, { r: 0.8 }),
+  azulRele: mE(0x2c6fd6, { r: 0.35 }), borneraAzul: mE(0x2a64c9), servo: mE(0x2f61d8, { r: 0.45 }), amarillo: mE(0xf1c232), lente: mE(0xf7f7f2, { r: 0.25 }),
+  capacitor: mE(0x22314f, { r: 0.3 }), proto: new THREE.MeshStandardMaterial({ map: tx, roughness: 0.8 }), tecnopor: mE(0xfbfbf8, { r: 0.95 }), naranja: mE(0xe8792b), rojo: mE(0xa3372b, { r: 0.8 }), oro: mE(0xd6a33a, { r: 0.6 }) };
+
+const grupos = { bandeja: new THREE.Group(), tapa: new THREE.Group(), casa: new THREE.Group(), techo: new THREE.Group(), cables: new THREE.Group() };
+const ALTO = { bandeja: 0, tapa: 85, casa: 175, techo: 275, cables: 0 };
+Object.values(grupos).forEach((g) => escena.add(g));
+const bisagra = new THREE.Group(), hoja = new THREE.Group(), ejeBrazo = new THREE.Group();
+let carton = [], electronica = [], info = new Map(), M = null;
+
+function extruir(pts, agujeros, prof) {
+  const sh = new THREE.Shape(pts.map(([u, v]) => new THREE.Vector2(u, v)));
+  for (const h of agujeros) sh.holes.push(new THREE.Path(h.map(([u, v]) => new THREE.Vector2(u, v))));
+  return new THREE.ExtrudeGeometry(sh, { depth: prof, bevelEnabled: false, curveSegments: 1 });
+}
+function registrar(m, lista, nombre, nota) { m.castShadow = true; m.receiveShadow = true; info.set(m, { nombre, nota }); lista.push(m); return m; }
+function parte(q, padre, nota) {
+  let g, pos = [0, 0, 0], rot = null;
+  if (q.tipo === 'caja') { g = new THREE.BoxGeometry(q.b[0] - q.a[0], q.b[1] - q.a[1], q.b[2] - q.a[2]); pos = [0, 1, 2].map((i) => (q.a[i] + q.b[i]) / 2); }
+  else if (q.tipo === 'cil') {
+    g = new THREE.CylinderGeometry(q.r, q.r, q.h1 - q.h0, 28); const m = (q.h0 + q.h1) / 2;
+    if (q.eje === 'z') { pos = [q.c[0], q.c[1], m]; rot = [Math.PI / 2, 0, 0]; } else if (q.eje === 'y') pos = [q.c[0], m, q.c[1]]; else { pos = [m, q.c[0], q.c[1]]; rot = [0, 0, Math.PI / 2]; }
+  } else if (q.tipo === 'domo') { g = new THREE.SphereGeometry(q.r, 36, 18, 0, Math.PI * 2, 0, Math.PI / 2); pos = q.c; rot = [Math.PI / 2, 0, 0]; }
+  else if (q.tipo === 'esfera') { g = new THREE.SphereGeometry(q.r, 32, 20); pos = q.c; }
+  else if (q.tipo === 'cono') { g = new THREE.ConeGeometry(q.r, q.h, 16); pos = [q.c[0], q.c[1] - q.h / 2, q.c[2]]; rot = [0, 0, Math.PI]; }
+  const m = new THREE.Mesh(g, (ME[q.mat] || ME.blanco).clone()); m.position.set(...pos); if (rot) m.rotation.set(...rot);
+  padre.add(m); return registrar(m, electronica, q.nom, nota);
+}
+
+function construir(t) {
+  M = modelo(t);
+  for (const g of [...Object.values(grupos)]) { g.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); g.clear(); }
+  carton = []; electronica = []; info = new Map();
+  bisagra.clear(); hoja.clear(); ejeBrazo.clear();
+  const [px, py] = M.meca.bisagra;
+  bisagra.position.set(px, py, 0); hoja.position.set(-px, -py, 0); bisagra.add(hoja); grupos.casa.add(bisagra);
+  const destino = { bandeja: grupos.bandeja, tapa: grupos.tapa, jardin: grupos.tapa, casa: grupos.casa, puerta: hoja, techo: grupos.techo };
+  for (const p of M.piezas) {
+    const medida = `${fmt(p.ancho)} × ${fmt(p.alto)} mm, ${p.mat === 'corrugado' ? `cartón de ${fmt(t)} mm` : p.mat}${p.cant > 1 ? `, ${p.cant} piezas` : ''}`;
+    for (const s of p.solidos) {
+      const g = extruir(s.contorno, (s.agujeros || []).map((h) => h.pts), s.th);
+      const m = new THREE.Mesh(g, matCarton(p.col, p.mat === 'corrugado'));
+      m.matrixAutoUpdate = false;
+      m.matrix.makeBasis(new THREE.Vector3(...s.U), new THREE.Vector3(...s.V), new THREE.Vector3(...s.N)).setPosition(...s.o);
+      destino[p.grupo].add(m); registrar(m, carton, p.nom, `${medida}. ${p.nota || ''}`.trim());
+    }
+  }
+  for (const q of M.deco) parte(q, grupos.tapa, q.mat === 'tecnopor' ? 'Tres bolitas de tecnopor de 15, 10 y 8 mm, o plastilina blanca.' : 'Decoración del jardín.');
+  const grupoMod = { bandeja: grupos.bandeja, tapa: grupos.tapa, casa: grupos.casa, puerta: hoja };
+  for (const mod of [...M.modulos, M.iman]) for (const q of mod.partes) parte(q, grupoMod[mod.grupo], `${mod.medida}. ${mod.nota || ''}`);
+  // Brazo del servo: gira sobre su eje; en reposo apunta hacia atrás
+  const [xs, ys] = M.meca.servo;
+  ejeBrazo.position.set(xs, ys, 0); grupos.tapa.add(ejeBrazo);
+  M.meca.brazo.env.forEach((e, i) => {
+    const m = new THREE.Mesh(extruir(e.pts, [], e.h1 - e.h0), (i === 2 ? mE(COL.carton, { r: 0.85 }) : ME.blanco.clone())); m.position.z = e.h0;
+    ejeBrazo.add(m); registrar(m, electronica, ['Brazo del servo', 'Brazo del servo', 'Taco del brazo'][i], i === 2 ? `Capas de cartón pegadas al brazo hasta quedar a 1–2 mm de la puerta cerrada.` : 'El brazo que viene con el servo, de unos 17 mm.');
+  });
+  cables(t);
+  aplicarModo();
+}
+
+// Cables: solo ilustran el recorrido
+function cables(t) {
+  const { a, f, calza } = M, zS = f + calza, [xs, ys] = M.meca.servo;
+  const NET = { v12: 0xd23b30, v5: 0xf08a24, gnd: 0x2b2f33, sen: 0x12a2b3 };
+  const xL = a - 11;
+  const R = [
+    ['v12', [[58.5, a - 22, -13.5], [58, a - 28, -19], [xL - 4, 54, f + 12], [xL - 4, 50, f + 5]]],
+    ['gnd', [[61.5, a - 22, -13.5], [62, a - 28, -20], [xL + 3, 54, f + 12], [xL + 3, 50, f + 5]]],
+    ['v12', [[60, a - 22, -15.5], [72, 20, -20], [70, -6, f + 18], [67, -22, f + 12]]],
+    ['v5', [[xL - 4, 12, f + 5], [xL - 6, 4, f + 14], [46, 0, f + 12], [42, 4, f + 8]]],
+    ['gnd', [[xL + 3, 12, f + 5], [xL + 2, 2, f + 15], [46, -2, f + 13], [40, 4, f + 8]]],
+    ['v5', [[-6, 50, f + 8.5], [-10, 50, zS + 16], [-13.5, 48, zS + 10]]],
+    ['gnd', [[-6, 44, f + 8.5], [-10, 44, zS + 16], [-13.5, 42, zS + 10]]],
+    ['sen', [[-14, a - 60, zS + 10], [-4, -6, f + 18], [25.3, -26, f + 9]]],
+    ['v12', [[66, -42, f + 12], [74, -12, -12], [70, 16, -t - 8], [64, 21, -t - 10]]],
+    ['sen', [[xs + 15, ys, -14], [20, -20, -20], [8, -6, f + 10]]],
+    ['v5', [[xs + 15, ys + 2, -14], [22, -20, -21], [10, -6, f + 10]]],
+    ['gnd', [[xs + 15, ys - 2, -14], [24, -20, -22], [12, -6, f + 10]]],
+    ['sen', [[42, -53, -t - 25], [20, -30, -24], [-14, a - 62, zS + 10]]],
+    ['sen', [[17, -46 + t, 47], [40, -46 + t, 56], [44, -46 + t, 40], [44, -45 + t, 4], [41, -26, 1], [41, -26, -12], [8, 4, -16], [-14, a - 58, zS + 10]]],
+    ['sen', [[-46 + t, 4 + t, 12], [-44, 7, 4], [-42, 6, -6], [-30, 14, zS + 14], [-14, a - 56, zS + 10]]],
+  ];
+  for (const [net, pts] of R) {
+    const curva = new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(...p)));
+    const m = new THREE.Mesh(new THREE.TubeGeometry(curva, 64, 0.6, 8), new THREE.MeshStandardMaterial({ color: NET[net], roughness: 0.5 }));
+    m.castShadow = true; grupos.cables.add(m);
+  }
+}
+
+// ── Estado de la vista
+const E = { t: guardado, vista: 'frente', modo: 'armada', corte: 8, puerta: 0, metaPuerta: 0, brazo: 90, metaBrazo: 90, bloqueado: false };
+function aplicarModo() {
+  const xr = E.modo === 'rayos', exp = E.modo === 'despiece', cor = E.modo === 'corte';
+  plano.constant = E.corte;
+  const mats = new Set(carton.flatMap((m) => (Array.isArray(m.material) ? m.material : [m.material])));
+  for (const mat of mats) {
+    const vid = mat.color.getHex() === COL.vidrio;
+    mat.transparent = xr || vid; mat.opacity = xr ? 0.16 : vid ? 0.72 : 1; mat.depthWrite = !xr;
+    mat.clippingPlanes = cor ? [plano] : []; mat.needsUpdate = true;
+  }
+  for (const m of carton) m.castShadow = !xr;
+  for (const [k, g] of Object.entries(grupos)) g.position.z = exp ? ALTO[k] : 0;
+  grupos.cables.visible = !exp;
+  grupos.techo.visible = E.vista !== 'puerta';
+  document.querySelectorAll('[data-vista]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.vista === E.vista)));
+  document.querySelectorAll('[data-modo]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.modo === E.modo)));
+  $('fila-corte').hidden = !cor;
+  pedir();
+}
+
+// Cámara orbital con z hacia arriba
+const O = { r: 520, th: -1.08, ph: 0.98, t: new THREE.Vector3(0, -6, 25) };
+const VISTAS = { frente: { r: 540, th: -1.08, ph: 0.98, t: [0, -6, 28] }, atras: { r: 500, th: 1.95, ph: 1.12, t: [0, 10, 14] }, arriba: { r: 480, th: -1.5708, ph: 0.12, t: [0, 0, 0] },
+  puerta: { r: 215, th: 1.78, ph: 0.9, t: [4, -40, 20] }, despiece: { r: 1000, th: -1.08, ph: 1.05, t: [0, 0, 140] } };
+function colocar() { const s = Math.sin(O.ph); cam.position.set(O.t.x + O.r * s * Math.cos(O.th), O.t.y + O.r * s * Math.sin(O.th), O.t.z + O.r * Math.cos(O.ph)); cam.lookAt(O.t); }
+function vista(k) { const v = VISTAS[k]; O.r = v.r; O.th = v.th; O.ph = v.ph; O.t.set(...v.t); E.vista = k; aplicarModo(); }
+const punteros = new Map(); let arrastre = null;
+lienzo.addEventListener('pointerdown', (e) => { lienzo.setPointerCapture(e.pointerId); punteros.set(e.pointerId, [e.clientX, e.clientY]); arrastre = { boton: e.button, mov: 0 }; });
+lienzo.addEventListener('pointermove', (e) => {
+  if (!punteros.has(e.pointerId)) { tocar(e); return; }
+  const [x0, y0] = punteros.get(e.pointerId), dx = e.clientX - x0, dy = e.clientY - y0;
+  if (punteros.size === 2) {
+    const [p1, p2] = [...punteros.values()], d0 = Math.hypot(p1[0] - p2[0], p1[1] - p2[1]);
+    punteros.set(e.pointerId, [e.clientX, e.clientY]); const [q1, q2] = [...punteros.values()];
+    O.r = Math.min(1400, Math.max(90, (O.r * d0) / Math.max(1, Math.hypot(q1[0] - q2[0], q1[1] - q2[1])))); pedir(); return;
+  }
+  punteros.set(e.pointerId, [e.clientX, e.clientY]); if (arrastre) arrastre.mov += Math.abs(dx) + Math.abs(dy);
+  if (arrastre && (arrastre.boton === 2 || e.shiftKey)) {
+    const k = (O.r / lienzo.clientHeight) * 0.9, d = new THREE.Vector3(); cam.getWorldDirection(d);
+    const der = new THREE.Vector3().crossVectors(d, cam.up).normalize(), arr = new THREE.Vector3().crossVectors(der, d).normalize();
+    O.t.addScaledVector(der, -dx * k).addScaledVector(arr, dy * k);
+  } else { O.th -= dx * 0.008; O.ph = Math.min(1.55, Math.max(0.05, O.ph - dy * 0.008)); }
+  pedir();
+});
+const soltar = (e) => { punteros.delete(e.pointerId); if (!punteros.size && arrastre && arrastre.mov < 4) tocar(e, true); if (!punteros.size) arrastre = null; };
+lienzo.addEventListener('pointerup', soltar); lienzo.addEventListener('pointercancel', soltar);
+lienzo.addEventListener('contextmenu', (e) => e.preventDefault());
+lienzo.addEventListener('wheel', (e) => { e.preventDefault(); O.r = Math.min(1400, Math.max(90, O.r * Math.exp(e.deltaY * 0.0012))); pedir(); }, { passive: false });
+
+const rc = new THREE.Raycaster(), ptr = new THREE.Vector2(); let resaltada = null;
+function tocar(e, fijar) {
+  const r = lienzo.getBoundingClientRect(); ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  rc.setFromCamera(ptr, cam);
+  const lista = electronica.concat(E.modo === 'rayos' ? [] : carton).filter((m) => { let o = m; while (o) { if (!o.visible) return false; o = o.parent; } return true; });
+  const hit = rc.intersectObjects(lista, false).find((h) => E.modo !== 'corte' || h.point.x <= E.corte || electronica.includes(h.object));
+  const m = hit ? hit.object : null;
+  if (m !== resaltada) {
+    if (resaltada && electronica.includes(resaltada)) resaltada.material.emissive.setHex(0);
+    resaltada = m; if (m && electronica.includes(m)) m.material.emissive.setHex(0x553300);
+    pedir();
+  }
+  lienzo.style.cursor = m ? 'pointer' : 'grab';
+  if (m && (fijar || e.pointerType === 'mouse')) { const i = info.get(m); $('ficha-nombre').textContent = i.nombre; $('ficha-nota').textContent = i.nota || ''; }
+}
+lienzo.addEventListener('pointerleave', () => { if (resaltada && electronica.includes(resaltada)) resaltada.material.emissive.setHex(0); resaltada = null; pedir(); });
+
+// Puerta y pestillo
+const avisar = (t) => { $('aviso').textContent = t; };
+const chk = () => CHK[E.t];
+$('b-cerrojo').onclick = () => {
+  if (!E.bloqueado && E.metaPuerta > 0.5) { avisar('Primero cierra la puerta: el brazo solo gira con la puerta cerrada.'); return; }
+  E.bloqueado = !E.bloqueado; E.metaBrazo = E.bloqueado ? M.meca.trabado : M.meca.libre;
+  if (E.bloqueado && E.vista !== 'puerta') { if (E.modo === 'despiece') E.modo = 'armada'; vista('puerta'); }
+  avisar(E.bloqueado ? 'El servo gira el brazo 90° y queda detrás de la puerta.' : 'El brazo vuelve a apuntar hacia atrás.'); botones(); pedir();
+};
+$('b-puerta').onclick = () => {
+  if (E.metaPuerta > 0.5) { E.metaPuerta = 0; avisar('Puerta cerrada.'); }
+  else if (E.bloqueado) { E.metaPuerta = chk().puerta.trabada.angulo; E.rebote = true; avisar(`Trabada: la puerta se abre ${f1(chk().puerta.trabada.angulo)}° (su borde se mueve ${f1(chk().puerta.juegoBorde)} mm) y choca con el taco del brazo.`); }
+  else { E.metaPuerta = 85; avisar('La puerta gira hacia adentro sobre una bisagra de cinta.'); }
+  botones(); pedir();
+};
+function botones() { $('b-puerta').textContent = E.metaPuerta > 0.5 && !E.rebote ? 'Cerrar puerta' : 'Abrir puerta'; $('b-cerrojo').textContent = E.bloqueado ? 'Quitar cerrojo' : 'Poner cerrojo'; }
+document.querySelectorAll('[data-modo]').forEach((b) => { b.onclick = () => {
+  const antes = E.modo; E.modo = b.dataset.modo; aplicarModo();
+  if (E.modo === 'despiece') vista('despiece'); else if (antes === 'despiece') vista('frente');
+}; });
+document.querySelectorAll('[data-vista]').forEach((b) => { b.onclick = () => vista(b.dataset.vista); });
+$('r-corte').oninput = (e) => { E.corte = +e.target.value; $('v-corte').textContent = `x = ${E.corte} mm`; aplicarModo(); };
+
+let pendiente = false;
+function pedir() { if (!pendiente) { pendiente = true; requestAnimationFrame(cuadro); } }
+const reducido = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function cuadro() {
+  pendiente = false;
+  const paso = reducido ? 1 : 0.16;
+  E.puerta += (E.metaPuerta - E.puerta) * paso; E.brazo += (E.metaBrazo - E.brazo) * paso;
+  if (E.rebote && Math.abs(E.puerta - E.metaPuerta) < 0.05) { E.rebote = false; E.metaPuerta = 0; botones(); }
+  bisagra.rotation.z = (E.puerta * Math.PI) / 180;
+  ejeBrazo.rotation.z = (E.brazo * Math.PI) / 180;
+  const w = lienzo.clientWidth, h = lienzo.clientHeight;
+  if (lienzo.width !== Math.round(w * ren.getPixelRatio()) || lienzo.height !== Math.round(h * ren.getPixelRatio())) { ren.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
+  ren.setClearColor(new THREE.Color(css('--visor')), 1);
+  colocar(); ren.render(escena, cam);
+  if (Math.abs(E.puerta - E.metaPuerta) > 0.03 || Math.abs(E.brazo - E.metaBrazo) > 0.03) pedir();
+}
+new ResizeObserver(pedir).observe(lienzo);
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', pedir);
+new MutationObserver(pedir).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+// ── Plantillas, tablas y comprobaciones para el grosor elegido
+const GRUPOS = [['bandeja', 'Bandeja'], ['tapa', 'Tapa (jardín)'], ['casa', 'Casa'], ['puerta', 'Puerta'], ['techo', 'Techo'], ['jardin', 'Jardín']];
+const MATN = { corrugado: 'Cartón', cartulina: 'Cartulina', microporoso: 'Microporoso', acetato: 'Acetato' };
+// Cada lámina se dibuja al ancho real de su tarjeta: texto de unos 14 px, entre 3,2 y 7 px por mm
+function ajustarLaminas() {
+  document.querySelectorAll('figure.pieza').forEach((fig) => {
+    const p = M.piezas[+fig.dataset.i], caja = fig.querySelector('.lamina'), disp = caja.clientWidth;
+    if (!disp || +caja.dataset.ancho === disp && +caja.dataset.t === E.t) return;
+    let fs = 3, k = 4, r;
+    // los rectángulos sin plantilla solo muestran su medida: van más chicos
+    const [kMin, kMax] = p.plantilla ? [3.2, 7] : [1.6, 2.6];
+    for (let i = 0; i < 3; i++) { r = svgPieza(p, { fs, conTitulo: false }); k = Math.min(kMax, Math.max(kMin, disp / r.w)); fs = 14 / k; }
+    r = svgPieza(p, { fs, conTitulo: false });
+    caja.dataset.ancho = disp; caja.dataset.t = E.t;
+    caja.innerHTML = `<svg viewBox="0 0 ${r.w.toFixed(1)} ${r.h.toFixed(1)}" style="width:${(r.w * k).toFixed(0)}px" role="img" aria-label="Plantilla acotada: ${esc(p.nom)}">${r.svg}</svg>`;
+  });
+}
+let tAjuste = 0;
+new ResizeObserver(() => { clearTimeout(tAjuste); tAjuste = setTimeout(ajustarLaminas, 120); }).observe($('laminas'));
+function paginas() {
+  const t = E.t, K = CHK[t];
+  document.querySelectorAll('[data-t]').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.t === t)));
+  document.querySelectorAll('.t-actual').forEach((n) => { n.textContent = fmt(t); });
+  $('pdf-txt').textContent = `Descargar plantillas 1:1 para cartón de ${fmt(t)} mm (PDF, A4)`;
+  // Láminas por grupo
+  $('laminas').innerHTML = GRUPOS.map(([g, nom]) => {
+    const ps = M.piezas.filter((p) => p.grupo === g);
+    return `<h3 class="grupo-t">${nom}</h3><div class="laminas">${ps.map((p) => `<figure class="pieza${p.plantilla ? (p.ancho > 120 ? ' triple' : p.ancho > 60 ? ' doble' : '') : (p.ancho > 120 ? ' doble' : '')}" data-i="${M.piezas.indexOf(p)}">
+      <figcaption><b>${esc(p.nom)}</b><span>${p.cant > 1 ? `${p.cant} × ` : ''}${fmt(p.ancho)} × ${fmt(p.alto)} mm · ${MATN[p.mat]}${p.mat === 'corrugado' ? ` ${fmt(t)} mm` : ''}${p.plantilla ? ' · en el PDF' : ''}</span></figcaption>
+      <div class="lamina"></div>${p.nota ? `<p>${esc(p.nota)}</p>` : ''}</figure>`).join('')}</div>`;
+  }).join('');
+  ajustarLaminas();
+  // Lista de corte y material
+  const area = (pts) => Math.abs(pts.reduce((s, q, i) => { const r = pts[(i + 1) % pts.length]; return s + q[0] * r[1] - r[0] * q[1]; }, 0)) / 2;
+  const sup = (mat) => M.piezas.filter((p) => p.mat === mat).reduce((s, p) => s + p.cant * area(p.forma.contorno), 0);
+  $('m-carton').textContent = `${(sup('corrugado') / 1e6).toFixed(2).replace('.', ',')} m²`;
+  $('lista').innerHTML = M.piezas.map((p) => `<tr><td>${esc(p.nom)}</td><td>${MATN[p.mat]}</td><td class="n">${p.cant}</td><td class="n">${fmt(p.ancho)} × ${fmt(p.alto)}</td><td>${p.plantilla ? 'Plantilla' : 'Regla'}</td></tr>`).join('');
+  // Componentes
+  $('componentes').innerHTML = [...M.modulos.filter((m) => !m.virtual), M.iman].map((m) => `<tr><td>${esc(m.nom)}</td><td>${esc(m.nota)}</td><td class="n">${esc(m.medida)}</td></tr>`).join('');
+  // Comprobaciones
+  const filas = [
+    [`${K.solidos} volúmenes entre piezas y módulos, sin ningún choque`, K.choques.length === 0],
+    [`Sin cerrojo, la puerta gira ${K.puerta.libre.angulo}° y se detiene contra la pared del frente`, K.puerta.libre.angulo >= 85],
+    [`Con cerrojo, se abre ${f1(K.puerta.trabada.angulo)}°: su borde se mueve ${f1(K.puerta.juegoBorde)} mm y el imán sigue junto al reed`, K.puerta.trabada.angulo <= 8],
+    [`El brazo gira de reposo a trabado sin tocar nada con la puerta cerrada`, !K.barrido],
+    [`La tapa entra en la bandeja con ${fmt(K.holguras.tapaBandeja)} mm de juego por lado; el tapón del techo, con ${fmt(K.holguras.tapon)} mm`, true],
+    [`El servo queda ${fmt(K.holguras.servoRele)} mm sobre el relé`, K.holguras.servoRele >= 1],
+    [`La ranura del USB queda ${fmt(K.holguras.usbSobreBorde)} mm sobre el borde de la bandeja, y el jack, ${fmt(K.holguras.jackSobreBorde)} mm`, K.holguras.usbSobreBorde > 0],
+    [`Ningún sensor queda a la vista detrás de una ventana`, K.ventanas.length === 0],
+    [`Todas las plantillas caben en una hoja A4`, K.A4.every((x) => x.cabe)],
+  ];
+  $('checks-t').innerHTML = filas.map(([txt, ok]) => `<tr><td>${esc(txt)}</td><td><span class="tag ${ok ? 'ok' : 'warn'}">${ok ? 'Pasa' : 'Revisar'}</span></td></tr>`).join('');
+  $('s-trabada').textContent = `${f1(K.puerta.trabada.angulo)}°`;
+  $('s-piezas').textContent = M.piezas.reduce((s, p) => s + p.cant, 0);
+  $('s-bandeja').textContent = `${fmt(M.T)} mm`;
+  $('cav').textContent = `${fmt(2 * M.a)} × ${fmt(2 * M.a)} × ${fmt(M.hC)}`;
+}
+function grosor(t) {
+  E.t = t; try { localStorage.setItem('casita-carton-t', String(t)); } catch {}
+  E.metaPuerta = E.puerta = 0; E.bloqueado = false; E.metaBrazo = E.brazo = 90; botones();
+  construir(t); paginas();
+}
+document.querySelectorAll('[data-t]').forEach((b) => { b.onclick = () => grosor(+b.dataset.t); });
+
+// Descarga del PDF del grosor elegido: el visor de claude.ai pide confirmación; sin la capacidad, el botón no aparece
+let descargas = null;
+(async () => {
+  try { descargas = window.claude && window.claude.use ? await window.claude.use('downloads') : null; } catch { descargas = null; }
+  $('pdf').hidden = !descargas;
+})();
+$('pdf').onclick = async () => {
+  if (!descargas) return;
+  const estado = $('pdf-estado'), t = E.t;
+  try {
+    const r = await fetch(`plantillas_${t}mm.pdf`);
+    if (!r.ok) throw { code: 'unavailable' };
+    await descargas.save({ filename: `casita_carton_plantillas_${t}mm.pdf`, data: await r.blob() });
+    estado.textContent = `Listo: plantillas para cartón de ${fmt(t)} mm.`;
+  } catch (err) {
+    const c = err && err.code;
+    if (c === 'declined') return;
+    if (c === 'rate_limited') { estado.textContent = 'Ya hay una descarga esperando confirmación.'; return; }
+    estado.textContent = 'No se pudo descargar aquí. Los PDF también están en casita_carton/, junto al proyecto.';
+    if (['unavailable', 'not_granted', 'capability_disabled', 'capability_removed'].includes(c)) $('pdf').hidden = true;
+  }
+};
+
+grosor(E.t); vista('frente');
+window.__listo = true;
+window.__visor = { E, aplicarModo, vista, pedir, cuadro, grosor };
+
+</script>

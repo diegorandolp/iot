@@ -1,0 +1,279 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else
+  \usepackage{fontspec}
+  \setmainfont{texgyretermes}[Extension=.otf, UprightFont=*-regular,
+    BoldFont=*-bold, ItalicFont=*-italic, BoldItalicFont=*-bolditalic]
+\fi
+\usepackage[spanish,es-tabla]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,calc,babel}
+
+\input{figuras/estilos}
+
+\title{Sistema inteligente de seguridad residencial IoT con monitoreo inalámbrico y alertas en tiempo real}
+\author{
+  \IEEEauthorblockN{Ariann Abigail Salcedo Quiroz\\
+    Diego Randolp Quispe Apaza\\
+    Federico Iribar Casanova\\
+    Sofia del Pilar Salazar Mendoza}
+  \IEEEauthorblockA{Universidad de Ingeniería y Tecnología\\
+    Internet de las Cosas\\
+    22 de setiembre de 2026}
+}
+
+\begin{document}
+\maketitle
+
+%=================================================================
+\section{Introducción}
+\label{sec:introduccion}
+
+En una ciudad como Lima, una vivienda suele protegerse con piezas que no se comunican entre sí: una cerradura, una alarma independiente y, con suerte, una cámara. Cada una trabaja por su cuenta. Así, la casa tarda en notar un evento de riesgo y casi nunca reacciona sola, sin que alguien intervenga.
+
+Eso empezó a cambiar con los microcontroladores baratos que traen Wi-Fi. Hoy un chip de pocos dólares puede leer varios sensores, procesar sus datos en el mismo dispositivo y mandar el resultado a una interfaz de usuario en tiempo real \cite{alfuqaha2015survey, oktafiani2025esp32}. Sobre esa base proponemos un prototipo de seguridad residencial construido alrededor de un ESP32. Tres sensores (presencia, apertura y vibración) alimentan una lógica que correlaciona eventos y decide el nivel de riesgo. Si el evento es crítico, suenan una sirena y un bloqueo electromecánico. Todo se reporta por Wi-Fi a una aplicación web alojada en AWS, que además de mostrar las alertas calcula métricas sobre el funcionamiento del propio sistema.
+
+La Sección~\ref{sec:problematica} describe el problema y la Sección~\ref{sec:marco-teorico} reúne los fundamentos técnicos. Después revisamos trabajos previos (Sección~\ref{sec:estado-arte}). La Sección~\ref{sec:metodologia} detalla componentes, arquitectura, lógica y métricas, y la Sección~\ref{sec:objetivos} cierra con objetivos, alcances y limitaciones.
+
+%=================================================================
+\section{Problemática}
+\label{sec:problematica}
+
+Una intrusión puede empezar de varias maneras. Alguien abre una puerta o una ventana sin autorización. Otras veces hay movimiento en una zona que debería estar vacía, o golpes contra una estructura que alguien intenta forzar. Una cerradura, una alarma puntual o una cámara aislada detecta, en el mejor caso, uno de esos eventos, y no tiene forma de relacionarlo con los demás. Esa desconexión cuesta los primeros segundos, que son justamente el intervalo en el que todavía se puede disuadir al intruso o alertar a quienes están dentro. Por eso los sistemas recientes combinan PIR y contactos magnéticos para disparar la alerta apenas empieza el acceso no autorizado \cite{arinde2024multisensor}.
+
+El precio empeora las cosas. Los sistemas comerciales de gama media y alta quedan fuera del alcance de un hogar promedio, y las opciones baratas suelen traer un solo tipo de sensor, solo movimiento o solo apertura de puertas, sin correlación de eventos ni aviso remoto. La tecnología para hacerlo mejor ya es barata. En una revisión de diez sistemas domésticos basados en ESP32, todos lograron notificar en tiempo real, casi siempre por Telegram o por una página web \cite{oktafiani2025esp32}.
+
+Hay un tercer problema, menos visible. El dueño de una alarma barata rara vez sabe si funciona bien. No sabe cuántas alertas fueron falsas ni cuánto tardó en llegar un aviso, y tampoco sabe si el equipo estuvo desconectado la noche anterior.
+
+Proponemos un sistema integrado y de bajo costo para cubrir ese hueco. El sistema debe (i) detectar distintos eventos de riesgo con varios sensores, (ii) correlacionarlos y clasificarlos en un microcontrolador, (iii) disparar una respuesta automática, sonora, de bloqueo o ambas, y (iv) avisar en tiempo real por un enlace inalámbrico a una interfaz que mida su propio desempeño. Combinar las señales de varios sensores también ayuda a mantener acotadas las falsas alarmas \cite{pugh2015fusion}. Como la decisión se toma en el microcontrolador, la respuesta local no depende de Internet.
+
+%=================================================================
+\section{Marco Teórico}
+\label{sec:marco-teorico}
+
+\subsection{Internet de las Cosas (IoT) y arquitectura por capas}
+El Internet de las Cosas es una red de objetos físicos (sensores, actuadores y dispositivos embebidos) que recogen datos y los transmiten por Internet sin intervención humana directa \cite{alfuqaha2015survey}. Hay varios modelos de arquitectura. Los más citados tienen tres o cinco capas, y en su versión mínima separan una capa de percepción con sensores y actuadores, una capa de red que transporta los datos y una capa de aplicación donde esos datos se procesan, se guardan y se visualizan \cite{alfuqaha2015survey, ray2018survey}. El prototipo sigue el esquema de tres capas. Los sensores forman la percepción, el enlace Wi-Fi del ESP32 hasta la nube hace de capa de red y la aplicación web es la aplicación.
+
+\subsection{Sensores empleados}
+\begin{itemize}
+  \item \textbf{Sensor PIR (Passive Infrared):} capta la radiación infrarroja que emite un cuerpo humano al moverse dentro de su campo de visión y responde con una salida digital. Es barato y consume poco, por eso aparece en 7 de cada 10 sistemas de seguridad con ESP32 revisados por Oktafiani y Widhiantoro \cite{oktafiani2025esp32}.
+  \item \textbf{Sensor magnético (reed switch):} tiene dos piezas, un imán y un interruptor de láminas. Cuando se separan, como pasa al abrir una puerta o ventana, el circuito cambia de estado y el sistema registra la apertura.
+  \item \textbf{Sensor de vibración (piezoeléctrico o SW-420):} reacciona a golpes y vibraciones mecánicas sobre la superficie donde está montado. Sirve para detectar intentos de forzar puertas, ventanas u otras estructuras.
+\end{itemize}
+
+\subsection{Microcontrolador ESP32}
+El ESP32 es un microcontrolador de bajo costo con Wi-Fi y Bluetooth de doble modo integrados, además de varias entradas y salidas digitales y analógicas. Su capacidad de cómputo alcanza para leer sensores, tomar decisiones y transmitir eventos en tiempo real. Por eso es una de las plataformas más usadas en proyectos de seguridad residencial con IoT \cite{oktafiani2025esp32, nannung2025iot}.
+
+\subsection{Comunicación inalámbrica y MQTT}
+MQTT (Message Queuing Telemetry Transport) es un protocolo de publicación y suscripción pensado para dispositivos con pocos recursos \cite{alfuqaha2015survey, light2017mosquitto}. Cada dispositivo publica mensajes cortos en un \emph{tópico}, por ejemplo \texttt{casa/eventos}, y un intermediario llamado \emph{broker} los reenvía a quienes estén suscritos. La cabecera mínima ocupa 2 bytes. Sobre TLS, el mismo protocolo viaja cifrado por el puerto 8883.
+
+\subsection{Procesamiento en la nube e interfaz web}
+Un servidor en la nube recibe los mensajes del broker, los guarda y los procesa antes de mostrarlos. Ese procesamiento previo convierte eventos sueltos en indicadores, como la latencia promedio de una alerta o el porcentaje de tiempo que el nodo estuvo conectado. La interfaz web consulta esos indicadores y los grafica. Así el usuario puede comprobar que el sistema cumple lo que promete, además de ver qué pasó. Las decisiones urgentes se quedan fuera de la nube. Tomarlas en el borde de la red, cerca de los sensores, evita depender de la latencia o de la conexión a Internet \cite{shi2016edge}.
+
+\subsection{Actuadores}
+La sirena es el actuador principal. Un módulo relé la enciende cuando el sistema clasifica un evento como crítico. Como segunda línea de respuesta está una cerradura electromagnética o un solenoide de bloqueo, también conmutado por relé. Las dos cargas piden más corriente de la que entrega el ESP32 y por eso se alimentan desde una fuente externa independiente.
+
+\subsection{Detección de intrusos por correlación de eventos}
+La detección de intrusos en edificios con redes de sensores inalámbricos (WSN) reparte nodos por el ambiente y reporta a una estación base solo lo que parece anormal \cite{walchli2009building}. Fusionar las señales de varios sensores permite fijar de antemano cuántas falsas alarmas se toleran \cite{pugh2015fusion}. La parte ``inteligente'' del prototipo sale de esa idea: un solo sensor activado genera una alerta leve, pero dos sensores distintos dentro de una misma ventana de tiempo elevan el evento a crítico.
+
+%=================================================================
+\section{Estado del Arte}
+\label{sec:estado-arte}
+
+Cada integrante del equipo revisó dos artículos vinculados a algún componente del proyecto.
+
+\subsection{Revisado por Ariann Abigail Salcedo Quiroz}
+Nannung et al. \cite{nannung2025iot} armaron un prototipo de seguridad residencial sobre un ESP32-CAM que reconoce rostros con Haar Cascade y LBPH y vigila temperatura, humedad y gases con los sensores DHT22 y MQ-2. Si el rostro está registrado, un relé abre una cerradura solenoide, y si no lo está, la puerta sigue trabada. El reconocimiento facial llegó a 95,31\% de precisión. El sistema también detectó temperaturas sobre 40\,°C y concentraciones de gas por encima de 300\,ppm, y avisó por Telegram. De este trabajo tomamos el uso del relé con cerradura solenoide como respuesta física.
+
+Oktafiani y Widhiantoro \cite{oktafiani2025esp32} revisaron diez artículos sobre sistemas de seguridad doméstica con ESP32. El PIR ganó con claridad. Apareció en 7 de ellos, frente a 3 con el sensor de gas MQ-2 y apenas 2 con ESP32-CAM, y en todos los casos el sistema detectó la amenaza y avisó en tiempo real, casi la mitad por Telegram (45,45\%), un poco más de un tercio por una página web (36,36\%) y el resto con la aplicación Blynk (18,18\%). Esa distribución nos llevó a poner el PIR entre los sensores principales y a construir una interfaz web propia.
+
+\subsection{Revisado por Diego Randolp Quispe Apaza}
+Wälchli y Braun \cite{walchli2009building} vigilaron una oficina de dos personas con diez nodos sensores inalámbricos y una estación base. El objetivo era reportar ocupaciones sospechosas, por ejemplo un ladrón registrando la oficina. Sus nodos guardan memoria local y reportan solo lo anormal, y con eso ahorraron hasta 90\% de la comunicación frente a un esquema de umbral sin memoria. Nuestro ESP32 hace algo parecido y publica eventos y latidos en lugar de lecturas continuas.
+
+Pugh, Brewer y Kvam \cite{pugh2015fusion}, de Sandia National Laboratories, fusionaron las señales de varios sensores PIR para detectar intrusiones en una habitación. En su algoritmo la probabilidad de falsa alarma no puede superar un valor fijado en el diseño, por ejemplo una probabilidad de 0,01 de tener una sola falsa alarma en todo un año. El estudio deja fuera los ambientes anormales, como cambios bruscos de temperatura por el aire acondicionado. Nuestra regla de dos sensores en 10\,s es una versión mucho más simple de la misma idea.
+
+\subsection{Revisado por Federico Iribar Casanova}
+Ray \cite{ray2018survey} ordena por dominio de aplicación las arquitecturas IoT publicadas, desde modelos genéricos hasta propuestas para hogar inteligente, salud o transporte, y cierra con los retos abiertos de cada una. Con ese mapa ubicamos el prototipo en el modelo por capas y separamos percepción, red y aplicación en módulos que se pueden cambiar por separado.
+
+Al-Fuqaha et al. \cite{alfuqaha2015survey} repasan las tecnologías habilitadoras, los protocolos y las aplicaciones del IoT. Incluyen una comparación de protocolos de aplicación, entre ellos MQTT y CoAP, para llevar datos de sensores a servidores remotos. Tomamos esa comparación como referencia al elegir MQTT.
+
+\subsection{Revisado por Sofia del Pilar Salazar Mendoza}
+Jin et al. \cite{jin2018wlid} proponen WLID, un detector de intrusos para toda la casa que no usa cámaras ni sensores infrarrojos. Mide la intensidad de la señal Wi-Fi (RSSI) entre dispositivos que ya existen en el hogar, como el televisor o el aire acondicionado, y aplica un método estadístico no paramétrico para notar cuándo una persona altera esa señal. En una vivienda real la tasa de detección fue cercana al 100\%. Nosotros usamos el RSSI con otro fin, como indicador de la calidad del enlace del ESP32.
+
+Arinde e Idowu \cite{arinde2024multisensor} construyeron un sistema de detección de intrusos para casas y oficinas con un sensor PIR, interruptores magnéticos y un módulo GSM, controlados por un ATmega328P. Ante una intrusión, el sistema llama por teléfono al propietario. Es la combinación de sensores más cercana a la nuestra. En nuestro caso la alerta viaja por Wi-Fi, y cada evento termina alimentando métricas de desempeño que ellos no calculan.
+
+%=================================================================
+\section{Metodología}
+\label{sec:metodologia}
+
+\subsection{Lista de componentes y especificaciones técnicas}
+
+La Tabla~\ref{tab:componentes} agrupa los componentes por capa. El prototipo cumple los mínimos pedidos: tres sensores, al menos un actuador, comunicación inalámbrica, una interfaz con procesamiento previo y una carcasa. El lector de huella, la cámara y el sensor de humo aparecen al final como opcionales. Solo entran si el núcleo queda terminado y probado antes de tiempo.
+
+\begin{table}[!t]
+\centering
+\caption{Componentes del prototipo y especificaciones}
+\label{tab:componentes}
+\footnotesize
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.35cm}>{\raggedright\arraybackslash}p{5.65cm}@{}}
+\toprule
+\textbf{Componente} & \textbf{Especificaciones y función} \\
+\midrule
+\multicolumn{2}{@{}l}{\textit{Sensores}} \\
+PIR HC-SR501 & 4,5--20\,V, salida digital de 3,3\,V. Alcance ajustable de 3 a 7\,m, cono de unos 110°. Detecta movimiento. \\
+Magnético MC-38 (reed switch) & Contacto seco con imán, se activa al separarse unos 2\,cm. Se lee con pull-up interno. Detecta apertura de puerta o ventana. \\
+Vibración SW-420 & 3,3--5\,V, comparador LM393 con salida digital y sensibilidad ajustable. Detecta golpes y forzamiento. \\
+\midrule
+\multicolumn{2}{@{}l}{\textit{Procesamiento y comunicación}} \\
+ESP32 DevKit V1 (ESP32-WROOM-32) & Doble núcleo a 240\,MHz, 520\,KB de SRAM, 4\,MB de flash. Wi-Fi 802.11 b/g/n a 2,4\,GHz y Bluetooth 4.2. Lógica de 3,3\,V, alimentación de 5\,V por USB. \\
+\midrule
+\multicolumn{2}{@{}l}{\textit{Actuación}} \\
+Módulo de relés de 2 canales & Bobina de 5\,V con optoacoplador, contactos de 10\,A a 250\,VAC o 30\,VDC. \\
+Sirena 12\,V & Unos 110\,dB. Alerta sonora ante un evento crítico. \\
+Cerradura solenoide 12\,V & Consumo cercano a 1\,A al activarse. Bloqueo ante un evento crítico. \\
+Fuente 12\,V, 2\,A & Alimenta sirena y cerradura por separado del ESP32. \\
+\midrule
+\multicolumn{2}{@{}l}{\textit{Interfaz y nube}} \\
+Servidor AWS EC2 (t3.micro, Ubuntu) & 2 vCPU, 1\,GB de RAM. Corre el broker Mosquitto (MQTT sobre TLS, puerto 8883), el backend en Python (FastAPI) y una base SQLite. \\
+Aplicación web propia & Historial de eventos, estado del sistema y métricas de desempeño (Tabla~\ref{tab:metricas}). Se abre desde cualquier navegador. \\
+\midrule
+\multicolumn{2}{@{}l}{\textit{Opcionales (solo si alcanza el tiempo)}} \\
+Lector de huella R307 & Interfaz UART a 57\,600\,bps, guarda hasta 1000 huellas en el propio módulo. Permite armar y desarmar el sistema y abrir la cerradura sin la app. \\
+ESP32-CAM (OV2640) & Cámara de 2\,MP con ranura microSD y Wi-Fi propio, 5\,V. Toma una foto ante un evento crítico y la sube al servidor. \\
+Humo MQ-2 & 5\,V, salida analógica y digital. Detección temprana de incendio. \\
+\midrule
+\multicolumn{2}{@{}l}{\textit{Enclosure}} \\
+Carcasa impresa en 3D (PLA) & Aloja el ESP32, los relés y el cableado, con aberturas para el PIR y la sirena. Cartón como alternativa. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Microcontrolador seleccionado}
+Elegimos el ESP32 como nodo central porque trae Wi-Fi integrado, tiene entradas digitales de sobra para los sensores previstos y cuesta poco. Con él, el proyecto se mantiene económico, tal como se recomendó, y no depende de procesadores caros. Su reloj puede sincronizarse por NTP, lo que permite marcar cada evento con la hora exacta en que ocurrió y medir después cuánto tardó en llegar.
+
+\subsection{Diagrama de bloques del sistema propuesto}
+
+\begin{figure}[!t]
+\centering
+\input{figuras/bloques}
+\caption{Diagrama de bloques del sistema. En azul la adquisición (sensores), en naranja el procesamiento local (ESP32), en verde la actuación (relés, sirena y cerradura) y en morado la nube y la interfaz. Todo el hardware local va dentro de la carcasa.}
+\label{fig:bloques}
+\end{figure}
+
+La Figura~\ref{fig:bloques} sigue la división entre borde y nube descrita por Shi et al. \cite{shi2016edge}. Los tres sensores entran al ESP32 por pines GPIO. El ESP32 decide localmente, conmuta la sirena y la cerradura a través del módulo de relés y publica cada evento por MQTT sobre Wi-Fi. Los actuadores toman energía de la fuente de 12\,V, nunca del ESP32. En la nube, el servidor recibe los mensajes, los guarda y calcula las métricas que la aplicación web muestra.
+
+\subsection{Lógica de detección y clasificación}
+
+La Figura~\ref{fig:flujo} muestra el ciclo que corre en el ESP32. Cuando un sensor se activa, el programa revisa si otro sensor distinto también se activó en los últimos 10\,s. Un evento aislado queda como alerta leve y solo se reporta. Dos sensores distintos dentro de esa ventana, por ejemplo vibración seguida de apertura, forman un evento crítico que enciende la sirena y cierra el bloqueo. En ambos casos el ESP32 publica un mensaje con el tipo de sensor, el nivel, un número de secuencia y la marca de tiempo. Cada 30\,s manda también un latido (\emph{heartbeat}) con la intensidad de la señal Wi-Fi (RSSI), aunque no haya eventos.
+
+\begin{figure}[!t]
+\centering
+\input{figuras/flujo}
+\caption{Diagrama de flujo de la lógica que corre en el ESP32.}
+\label{fig:flujo}
+\end{figure}
+
+\subsection{Interfaz gráfica y procesamiento previo}
+
+La interfaz es una aplicación web propia. El backend se suscribe a los tópicos MQTT, guarda cada mensaje y calcula las métricas de la Tabla~\ref{tab:metricas} antes de enviarlas al navegador. Con ellas se puede comprobar que el sistema funciona como se diseñó. La vista principal muestra el estado actual (conectado o no, nivel de la última alerta), el historial de eventos y un gráfico por métrica. Cada alerta tiene un botón para marcarla como falsa, y esas marcas alimentan la tasa de falsas alarmas.
+
+\begin{table}[!t]
+\centering
+\caption{Métricas calculadas por el backend}
+\label{tab:metricas}
+\footnotesize
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.35cm}>{\raggedright\arraybackslash}p{5.65cm}@{}}
+\toprule
+\textbf{Métrica} & \textbf{Cálculo} \\
+\midrule
+Latencia de alerta & Hora de recepción en el servidor menos la hora del evento en el ESP32 (sincronizado por NTP). Promedio y percentil 95. \\
+Pérdida de mensajes & Huecos en el número de secuencia sobre el total esperado, en \%. \\
+Disponibilidad del nodo & Tiempo con latidos recibidos cada 30\,s sobre el tiempo total, en \%. \\
+Eventos por sensor & Conteo por sensor y por hora. Revela sensores ruidosos o mal calibrados. \\
+Tasa de falsas alarmas & Alertas marcadas como falsas por el usuario sobre el total de alertas. \\
+Calidad del enlace & RSSI promedio del Wi-Fi reportado en cada latido, en dBm. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%=================================================================
+\section{Objetivos y Alcances}
+\label{sec:objetivos}
+
+\subsection{Objetivo general}
+Diseñar e implementar un sistema inteligente de seguridad residencial IoT que detecte intrusiones con sensores de movimiento, apertura y vibración, clasifique el nivel de riesgo en un ESP32 correlacionando eventos, responda con sirena y bloqueo y envíe alertas en tiempo real por Wi-Fi a una aplicación web que mida el desempeño del propio sistema.
+
+\subsection{Objetivos específicos}
+\begin{itemize}
+  \item Detectar movimiento, apertura de puertas o ventanas y vibraciones de forzamiento con los sensores PIR, magnético y SW-420.
+  \item Clasificar cada evento como leve o crítico en el ESP32, según si dos sensores distintos se activan dentro de una ventana de 10\,s.
+  \item Activar la sirena y la cerradura solenoide ante todo evento crítico, sin depender de la conexión a Internet.
+  \item Publicar los eventos por MQTT sobre Wi-Fi hacia un servidor en AWS, con una latencia de alerta menor a 2\,s en el percentil 95.
+  \item Desarrollar una aplicación web que muestre eventos y estado, y que calcule latencia, pérdida de mensajes, disponibilidad, falsas alarmas y calidad del enlace.
+  \item Montar el hardware dentro de una carcasa impresa en 3D.
+  \item (Opcional) Agregar un lector de huella para armar y desarmar el sistema y una ESP32-CAM que fotografíe cada evento crítico.
+\end{itemize}
+
+\subsection{Alcances}
+\label{sec:alcance}
+El prototipo protege una sola zona de prueba: una puerta con su sensor magnético, un PIR que cubre el ambiente y un sensor de vibración sobre la puerta o una ventana. Incluye un nodo ESP32, la sirena, la cerradura solenoide, el servidor en AWS y la aplicación web. El lector de huella, la ESP32-CAM y el sensor de humo son opcionales. Siguiendo la retroalimentación recibida, no forman parte del núcleo y se agregarán únicamente si el prototipo base funciona y queda tiempo en el cronograma. Si entran, la cámara publica sus fotos por el mismo servidor y la huella permite desarmar el sistema en el sitio, sin tocar el celular.
+
+\subsection{Limitaciones}
+Se trata de un prototipo. No reemplaza a un sistema profesional de seguridad ni garantiza la protección de una vivienda real, y tampoco se conecta con centrales de emergencia, servicios policiales o plataformas comerciales. Sus fronteras operativas son concretas:
+\begin{itemize}
+  \item \textbf{Cobertura:} una zona y un solo nodo. El PIR alcanza como máximo 7\,m y el ESP32 debe estar al alcance de una red Wi-Fi de 2,4\,GHz.
+  \item \textbf{Conectividad:} si se cae el Wi-Fi o Internet, la sirena y el bloqueo siguen funcionando. Los eventos de ese intervalo no llegan a la aplicación, y la caída se ve como una baja en la disponibilidad.
+  \item \textbf{Energía:} sin batería de respaldo. Un corte de luz apaga el sistema.
+  \item \textbf{Red del laboratorio:} si la red bloquea el puerto 8883, la demostración usará un punto de acceso móvil.
+  \item \textbf{Seguridad:} MQTT va cifrado con TLS y autenticado con usuario y contraseña, pero el prototipo no contempla sabotaje físico del cableado ni interferencia de radio.
+\end{itemize}
+
+
+%=================================================================
+\begin{thebibliography}{99}
+
+\bibitem{alfuqaha2015survey}
+A.~Al-Fuqaha, M.~Guizani, M.~Mohammadi, M.~Aledhari y M.~Ayyash, ``Internet of Things: A survey on enabling technologies, protocols, and applications,'' \emph{IEEE Communications Surveys \& Tutorials}, vol.~17, no.~4, pp.~2347--2376, 2015, doi: 10.1109/COMST.2015.2444095.
+
+\bibitem{oktafiani2025esp32}
+F.~Oktafiani y D.~Widhiantoro, ``Studi literatur penggunaan ESP32 untuk sistem keamanan lingkungan rumah,'' en \emph{Seminar Nasional Inovasi Vokasi (SNIV)}, vol.~4, no.~1, pp.~267--274, jun. 2025.
+
+\bibitem{arinde2024multisensor}
+V.~Arinde y L.~Idowu, ``Multi-sensor intrusion detection system,'' arXiv:2406.05137, 2024.
+
+\bibitem{pugh2015fusion}
+M.~Pugh, J.~Brewer y J.~Kvam, ``Sensor fusion for intrusion detection under false alarm constraints,'' en \emph{2015 IEEE Sensors Applications Symposium (SAS)}, 2015, pp.~1--6, doi: 10.1109/SAS.2015.7133634.
+
+\bibitem{ray2018survey}
+P.~P. Ray, ``A survey on Internet of Things architectures,'' \emph{Journal of King Saud University -- Computer and Information Sciences}, vol.~30, no.~3, pp.~291--319, 2018, doi: 10.1016/j.jksuci.2016.10.003.
+
+\bibitem{nannung2025iot}
+J.~Nannung, A.~S. Miru, Muliadi y Gunawan, ``Development of an IoT-based home security system prototype using multisensors and ESP32-CAM,'' \emph{Journal of Embedded Systems, Security and Intelligent Systems}, vol.~6, no.~2, pp.~168--177, 2025, doi: 10.59562/jessi.v6i2.8456.
+
+\bibitem{light2017mosquitto}
+R.~A. Light, ``Mosquitto: server and client implementation of the MQTT protocol,'' \emph{Journal of Open Source Software}, vol.~2, no.~13, p.~265, 2017, doi: 10.21105/joss.00265.
+
+\bibitem{shi2016edge}
+W.~Shi, J.~Cao, Q.~Zhang, Y.~Li y L.~Xu, ``Edge computing: Vision and challenges,'' \emph{IEEE Internet of Things Journal}, vol.~3, no.~5, pp.~637--646, 2016, doi: 10.1109/JIOT.2016.2579198.
+
+\bibitem{walchli2009building}
+M.~Wälchli y T.~Braun, ``Building intrusion detection with a wireless sensor network,'' en \emph{Ad Hoc Networks (ADHOCNETS 2009)}, LNICST, vol.~28, Springer, 2010, pp.~607--622, doi: 10.1007/978-3-642-11723-7\_41.
+
+\bibitem{jin2018wlid}
+Y.~Jin, Z.~Tian, M.~Zhou, Z.~Li y Z.~Zhang, ``A whole-home level intrusion detection system using WiFi-enabled IoT,'' en \emph{2018 14th International Wireless Communications \& Mobile Computing Conference (IWCMC)}, 2018, pp.~494--499, doi: 10.1109/IWCMC.2018.8450442.
+
+\end{thebibliography}
+
+\end{document}

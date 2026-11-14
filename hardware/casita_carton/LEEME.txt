@@ -1,0 +1,17 @@
+Casita IoT de cartón
+====================
+
+plantillas_2mm.pdf, plantillas_3mm.pdf, plantillas_4mm.pdf
+    Plantillas a tamaño real en A4, una por grosor de cartón corrugado.
+    Midan su cartón, impriman el PDF de ese grosor al 100 % y comprueben
+    el cuadrado de 50 mm de la primera hoja. Esa hoja trae además la lista
+    de todas las piezas, con medidas.
+
+fuente/   Generador. Todas las medidas salen de carton.mjs (en mm).
+    node check.mjs        comprueba choques, puerta, pestillo y holguras
+    node plantillas.mjs   rehace los tres PDF (necesita chromium)
+    node sitio.mjs X.html arma la página con la vista 3D
+
+Mismas medidas por fuera que casita_iot: base de 172 × 172 × 42 mm
+(con cartón de 3 mm), casa de 100 × 100 × 60 mm y techo desmontable.
+Las medidas de los módulos son de tienda: mídanlos antes de pegar.

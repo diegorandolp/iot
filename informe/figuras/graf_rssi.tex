@@ -1,0 +1,12 @@
+% RSSI de cada latido (dBm) leído de figuras/datos/latidos.dat.
+% Un latido perdido (nan) deja un hueco en la línea.
+\begin{tikzpicture}
+\begin{axis}[grafico,
+  width=\anchografico, height=\altografico,
+  xmin=0, xmax=120, ymin=-80, ymax=-40,
+  unbounded coords=jump,
+  xlabel={Tiempo (min)}, ylabel={RSSI (dBm)}]
+  \addplot[serie1, line width=1pt] table[x=t_min, y=rssi_dbm] {figuras/datos/latidos.dat};
+  \marcaejemplo
+\end{axis}
+\end{tikzpicture}

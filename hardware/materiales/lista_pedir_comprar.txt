@@ -1,0 +1,56 @@
+LISTA DE MATERIALES - SEGURIDAD RESIDENCIAL IoT
+Actualizada: 4 de noviembre de 2026
+Entrega del informe final: viernes 13 de noviembre
+
+Precios aproximados: confirmar antes de comprar.
+
+
+1. PEDIR AL PROFESOR / LABORATORIO
+----------------------------------
+[ ] Impresión 3D de la casa y PLA     (si no hay: rollo de 1 kg, S/ 90)
+[ ] Multímetro, prestado              (ajustar el LM2596 a 5,0 V)
+[ ] Cautín y estaño, prestados        (soldar cables al jack y al LM2596)
+[ ] Protoboard 400 puntos             (si no hay: comprar, S/ 7)
+[ ] Cables Dupont                     (si no hay: comprar, S/ 8)
+[ ] Capacitor 1000 µF 25 V            (si no hay: comprar, S/ 1)
+
+Preguntarle también:
+[ ] ¿Acepta el buzzer y el servo en lugar de la sirena y la cerradura de 12 V?
+[ ] ¿Tiene el laboratorio SG90, MC-38 o SW-420 para prestar?
+
+
+2. COMPRAR
+----------
+[ ] Sensor magnético MC-38            1      S/  5
+[ ] Sensor de vibración SW-420        1      S/  6    (Altamira o MTLAB; Naylamp no lo vende)
+[ ] Shield de borneras ESP32 30 pines 1      S/ 15
+[ ] Cinta doble contacto              1      S/  4
+[ ] Cinta negra                       1      S/  3    (precio estimado)
+                                    
+
+[ ] Convertidor LM2596                1      S/ 12
+[ ] Capacitor 1000 µF 25 V            1      S/  1    (si el laboratorio no lo da)
+                                      Subtotal: S/ 36
+
+
+TOTAL
+-----
+Máximo sin PLA:                       S/  77
+Máximo con rollo de PLA:              S/ 167
+Si el laboratorio da protoboard, Dupont y capacitor: S/ 16 menos
+
+
+YA LO TENEMOS
+-------------
+ESP32 DevKit V1, PIR HC-SR501, módulo de relés de 2 canales,
+fuente 12 V 2 A, jack DC, cable USB, ESP32-CAM (opcional), MQ-2 (opcional)
+
+
+YA NO HACE FALTA
+----------------
+Sirena 12 V, cerradura solenoide, placa perforada, borneras de 2 pines,
+diodos 1N4007, capacitor 100 µF, LEDs, cable AWG 18 y 22, termocontraíble,
+tornillería M3, tornillos y tarugos, MDF, bisagras, lector de huella,
+fuente 12 V 4,2 A.
+
+Resistencias: solo si usan el MQ-2 (divisor 10 k / 20 k). Revisar si ya las tienen.

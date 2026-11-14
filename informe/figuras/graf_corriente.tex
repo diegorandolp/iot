@@ -1,0 +1,23 @@
+% Corriente estimada en la fuente de 12 V (A). Valores de la hoja
+% "Presupuesto de corriente": electrónica 0,36; sirena + cerradura 1,90;
+% servo atascado 0,34; ESP32-CAM + MQ-2 0,23.
+\begin{tikzpicture}
+\begin{axis}[grafico, ybar stacked, bar width=1.1cm,
+  width=\anchografico, height=\altografico,
+  symbolic x coords={P1,Actual,Opc},
+  xtick=data, xticklabels={Perfil P1, Actual, Actual + opcionales},
+  enlarge x limits=0.25, ymin=0, ymax=2.7, ytick={0,0.5,...,2.5},
+  ylabel={Corriente en 12\,V (A)},
+  legend style={at={(0.5,1.03)}, anchor=south, legend columns=3},
+  reverse legend=false]
+  \addplot[fill=serie1, draw=white] coordinates {(P1,0.36) (Actual,0.36) (Opc,0.36)};
+  \addplot[fill=serie2, draw=white] coordinates {(P1,1.90) (Actual,0.34) (Opc,0.34)};
+  \addplot[fill=serie3, draw=white] coordinates {(P1,0) (Actual,0) (Opc,0.23)};
+  \legend{Electrónica, Actuadores, Opcionales}
+  \draw[dashed, black!60, thick] ({rel axis cs:0,0} |- {axis cs:P1,2}) -- ({rel axis cs:1,0} |- {axis cs:P1,2})
+    node[pos=0.98, above left, font=\scriptsize, text=tinta] {Límite de la fuente};
+  \node[above, font=\scriptsize\bfseries, text=tinta] at (axis cs:P1,2.26) {2,26\,A};
+  \node[above, font=\scriptsize\bfseries, text=tinta] at (axis cs:Actual,0.70) {0,70\,A};
+  \node[above, font=\scriptsize\bfseries, text=tinta] at (axis cs:Opc,0.93) {0,93\,A};
+\end{axis}
+\end{tikzpicture}

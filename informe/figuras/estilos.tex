@@ -1,0 +1,69 @@
+% Paleta común para todos los diagramas
+\colorlet{cSensor}{blue!60!black}
+\colorlet{cProc}{orange!80!black}
+\colorlet{cAct}{green!45!black}
+\colorlet{cApp}{violet!70!black}
+\colorlet{cPower}{gray!70!black}
+
+% Colores de los gráficos de datos (paleta categórica validada para daltonismo)
+\definecolor{serie1}{HTML}{2A78D6}
+\definecolor{serie2}{HTML}{EB6834}
+\definecolor{serie3}{HTML}{1BAF7A}
+\definecolor{tinta}{HTML}{52514E}
+
+\tikzset{
+  >={Stealth[length=2mm]},
+  flecha/.style={->, thick, draw=black!75},
+  caja/.style={rectangle, rounded corners=2pt, draw=#1, fill=#1!10, thick,
+    minimum width=2.3cm, minimum height=0.85cm, align=center, inner sep=2pt},
+  etiqueta/.style={font=\scriptsize, text=black!70, fill=white, inner sep=1pt},
+}
+
+% Estilo base de los gráficos. Las diapositivas cambian el tamaño con \renewcommand.
+\newcommand{\anchografico}{9cm}
+\newcommand{\altografico}{5.2cm}
+\pgfplotsset{
+  compat=1.18,
+  grafico/.style={
+    axis lines=left,
+    axis line style={draw=black!45},
+    tick style={draw=black!45},
+    ymajorgrids, grid style={draw=black!12},
+    tick label style={font=\scriptsize, text=tinta},
+    label style={font=\footnotesize, text=tinta},
+    legend style={draw=none, fill=none, font=\scriptsize, text=tinta},
+    legend cell align=left,
+    every axis plot/.append style={line width=0.8pt},
+    /pgf/number format/use comma,
+  },
+}
+
+% Mientras los archivos de figuras/datos/ tengan valores de ejemplo, cada
+% gráfico lleva la marca "Datos de ejemplo". Al cargar las mediciones reales,
+% cambiar a \datosdeejemplofalse en main.tex y en slides.tex.
+\newif\ifdatosdeejemplo
+\datosdeejemplotrue
+\newcommand{\marcaejemplo}{%
+  \ifdatosdeejemplo
+    \node[anchor=north east, font=\scriptsize\bfseries, text=red!70!black,
+      fill=white, draw=red!70!black, rounded corners=1pt, inner sep=2pt]
+      at (rel axis cs:0.98,0.98) {Datos de ejemplo};
+  \fi}
+
+% Dato que falta medir o confirmar. Sale en rojo para que no pase desapercibido.
+\newcommand{\pendiente}[1]{\textcolor{red!70!black}{[#1]}}
+
+% Foto o captura: \imagen{archivo}{ancho}{alto}{qué debe mostrar}
+% Si Imagenes/archivo existe, se inserta. Si no, se dibuja un recuadro con la
+% descripción, así el documento compila mientras faltan las fotos.
+\newcommand{\imagen}[4]{%
+  \IfFileExists{Imagenes/#1}{%
+    \includegraphics[width=#2, height=#3, keepaspectratio]{Imagenes/#1}%
+  }{%
+    \begin{tikzpicture}
+      \node[draw=black!35, dashed, fill=black!4, rounded corners=2pt,
+        minimum width=#2, minimum height=#3, text width=0.85\dimexpr#2\relax,
+        align=center, font=\scriptsize, text=black!60] {%
+        \textbf{Imagenes/#1}\\[1mm]#4};
+    \end{tikzpicture}%
+  }}

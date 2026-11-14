@@ -1,0 +1,74 @@
+Informe final (P2) y presentación
+=================================
+
+main.tex     Informe con plantilla ACM (acmart, formato manuscript).
+slides.tex   Presentación final en beamer, extendida desde la del perfil.
+figuras/     Diagramas y gráficos en TikZ/pgfplots, compartidos por los dos.
+Imagenes/    Fotos y capturas propias (por ahora vacía).
+
+Compila en Overleaf con pdfLaTeX o XeLaTeX, o desde la carpeta raíz con
+"make" (ver README.md). "make zip" arma entregas/informe_overleaf.zip.
+
+
+1. FOTOS Y CAPTURAS
+-------------------
+Mientras falte una imagen, el PDF dibuja un recuadro gris con su nombre.
+Basta con copiar el archivo en Imagenes/ con ese nombre exacto (respetar
+.jpg o .png). Si la foto es .png y el nombre dice .jpg, conviértanla o
+cambien el nombre en el .tex.
+
+Archivo                    Dónde       Qué debe mostrar
+Imagenes/prototipo.jpg     informe+pres  Casa terminada, vista frontal, puerta cerrada.
+                                       Que se vean el domo del PIR y el copo del buzzer.
+Imagenes/compartimento.jpg informe+pres  Base abierta desde arriba: ESP32 en el shield, relé,
+                                       LM2596, protoboard y cables ordenados.
+Imagenes/puerta.jpg        informe+pres  Puerta abierta: reed del MC-38 sobre el marco e imán en la hoja.
+Imagenes/sw420.jpg         informe+pres  SW-420 pegado con silicona en la pared izquierda, por dentro.
+Imagenes/servo.jpg         informe+pres  Servo en el piso de la casa, con el pestillo trabando la puerta.
+Imagenes/lm2596.jpg        informe+pres  LM2596 con el multímetro marcando 5,0 V.
+Imagenes/app.png           informe+pres  Capturas de la app móvil lado a lado, en una sola imagen
+                                       horizontal: estado, historial y gráficos de métricas.
+Imagenes/prueba.jpg        presentación  Equipo probando un evento crítico, con la app abierta al lado.
+Imagenes/buzzer.jpg        presentación  Foto del buzzer SFM-20B suelto, fondo claro.
+Imagenes/sg90.jpg          presentación  Foto del servo SG90 suelto, fondo claro.
+Imagenes/video.jpg         presentación  Fotograma del video con los cuatro integrantes y el prototipo.
+
+Las fotos de figuras/fotos/ son referenciales de Wikimedia (créditos en las
+diapositivas). sirena.jpg y cerradura.jpg ya no se usan.
+
+
+2. DATOS DE LOS GRÁFICOS
+------------------------
+Los gráficos de latencia, RSSI y eventos leen figuras/datos/*.dat, que hoy
+tienen DATOS DE EJEMPLO (por eso llevan un sello rojo). Reemplácenlos con lo
+que registre el backend, con el mismo formato:
+
+  latencia.dat   una latencia en ms por línea: timestamp que agrega la regla
+                 de IoT Core menos el ts_evento del ESP32
+  latidos.dat    minuto y RSSI de cada latido; "nan" si el latido no llegó
+  eventos.dat    por sensor: activaciones y alertas marcadas como falsas
+
+Luego descomenten \datosdeejemplofalse en main.tex y en slides.tex.
+
+El gráfico de corriente usa la estimación de la hoja de cálculo y el de
+costos los precios de la lista de materiales. Esos no son de ejemplo.
+
+
+3. TEXTO PENDIENTE
+------------------
+Todo lo que está en rojo y entre corchetes falta completar o confirmar:
+cifras de resultados, la discusión, cómo se apaga el buzzer, los precios del
+buzzer y del servo, el costo mensual de AWS, y el enlace del video
+(\videourl en main.tex y slides.tex, que también genera el QR).
+Busquen "\pendiente" en los .tex.
+
+Del lado de AWS, el informe ya describe IoT Core, las reglas, DynamoDB, las
+Lambdas y API Gateway según la documentación del 11 de noviembre. Siguen
+marcados como pendientes:
+  - la prueba con el ESP32 real (pruebas funcionales 1 a 9),
+  - la tabla con el historial de latidos (hoy EstadoPuerta guarda solo el último),
+  - la Lambda de métricas con la ruta GET /metricas,
+  - la ruta para marcar una alerta como falsa.
+
+El informe NO incluye el endpoint de IoT, la URL de la API ni el PIN. No los
+agreguen: el informe y las diapositivas se van a compartir.

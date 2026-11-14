@@ -1,0 +1,365 @@
+{
+ "2": {
+  "t": 2,
+  "choques": [],
+  "puerta": {
+   "libre": {
+    "angulo": 92,
+    "contra": "Casa: pared del frente"
+   },
+   "trabada": {
+    "angulo": 4.25,
+    "contra": "Taco del brazo"
+   },
+   "juegoBorde": 1.4
+  },
+  "barrido": null,
+  "holguras": {
+   "tapaBandeja": 1,
+   "tapon": 0.5,
+   "servoRele": 3.3,
+   "usbSobreBorde": 2.2,
+   "jackSobreBorde": 7,
+   "puertaUmbral": 0.5
+  },
+  "ventanas": [],
+  "A4": [
+   {
+    "id": "b_ext_la",
+    "cabe": true
+   },
+   {
+    "id": "b_int_la",
+    "cabe": true
+   },
+   {
+    "id": "t_techo",
+    "cabe": true
+   },
+   {
+    "id": "t_pared_at",
+    "cabe": true
+   },
+   {
+    "id": "t_pared_iz",
+    "cabe": true
+   },
+   {
+    "id": "c_frente",
+    "cabe": true
+   },
+   {
+    "id": "c_fondo",
+    "cabe": true
+   },
+   {
+    "id": "c_lado_de",
+    "cabe": true
+   },
+   {
+    "id": "c_lado_iz",
+    "cabe": true
+   },
+   {
+    "id": "marco_v",
+    "cabe": true
+   },
+   {
+    "id": "marco_p",
+    "cabe": true
+   },
+   {
+    "id": "corona",
+    "cabe": true
+   },
+   {
+    "id": "lazo",
+    "cabe": true
+   },
+   {
+    "id": "r_timpano",
+    "cabe": true
+   },
+   {
+    "id": "r_nieve",
+    "cabe": true
+   },
+   {
+    "id": "r_chimenea",
+    "cabe": true
+   },
+   {
+    "id": "arbol_g_a",
+    "cabe": true
+   },
+   {
+    "id": "arbol_g_b",
+    "cabe": true
+   },
+   {
+    "id": "arbol_c_a",
+    "cabe": true
+   },
+   {
+    "id": "arbol_c_b",
+    "cabe": true
+   },
+   {
+    "id": "estrella",
+    "cabe": true
+   },
+   {
+    "id": "caminito",
+    "cabe": true
+   },
+   {
+    "id": "copo",
+    "cabe": true
+   }
+  ],
+  "piezas": 37,
+  "solidos": 90
+ },
+ "3": {
+  "t": 3,
+  "choques": [],
+  "puerta": {
+   "libre": {
+    "angulo": 92,
+    "contra": "Casa: pared del frente"
+   },
+   "trabada": {
+    "angulo": 4.25,
+    "contra": "Taco del brazo"
+   },
+   "juegoBorde": 1.4
+  },
+  "barrido": null,
+  "holguras": {
+   "tapaBandeja": 1,
+   "tapon": 0.5,
+   "servoRele": 2.3,
+   "usbSobreBorde": 4.2,
+   "jackSobreBorde": 7,
+   "puertaUmbral": 0.5
+  },
+  "ventanas": [],
+  "A4": [
+   {
+    "id": "b_ext_la",
+    "cabe": true
+   },
+   {
+    "id": "b_int_la",
+    "cabe": true
+   },
+   {
+    "id": "t_techo",
+    "cabe": true
+   },
+   {
+    "id": "t_pared_at",
+    "cabe": true
+   },
+   {
+    "id": "t_pared_iz",
+    "cabe": true
+   },
+   {
+    "id": "c_frente",
+    "cabe": true
+   },
+   {
+    "id": "c_fondo",
+    "cabe": true
+   },
+   {
+    "id": "c_lado_de",
+    "cabe": true
+   },
+   {
+    "id": "c_lado_iz",
+    "cabe": true
+   },
+   {
+    "id": "marco_v",
+    "cabe": true
+   },
+   {
+    "id": "marco_p",
+    "cabe": true
+   },
+   {
+    "id": "corona",
+    "cabe": true
+   },
+   {
+    "id": "lazo",
+    "cabe": true
+   },
+   {
+    "id": "r_timpano",
+    "cabe": true
+   },
+   {
+    "id": "r_nieve",
+    "cabe": true
+   },
+   {
+    "id": "r_chimenea",
+    "cabe": true
+   },
+   {
+    "id": "arbol_g_a",
+    "cabe": true
+   },
+   {
+    "id": "arbol_g_b",
+    "cabe": true
+   },
+   {
+    "id": "arbol_c_a",
+    "cabe": true
+   },
+   {
+    "id": "arbol_c_b",
+    "cabe": true
+   },
+   {
+    "id": "estrella",
+    "cabe": true
+   },
+   {
+    "id": "caminito",
+    "cabe": true
+   },
+   {
+    "id": "copo",
+    "cabe": true
+   }
+  ],
+  "piezas": 37,
+  "solidos": 87
+ },
+ "4": {
+  "t": 4,
+  "choques": [],
+  "puerta": {
+   "libre": {
+    "angulo": 92,
+    "contra": "Casa: pared del frente"
+   },
+   "trabada": {
+    "angulo": 4.25,
+    "contra": "Taco del brazo"
+   },
+   "juegoBorde": 1.4
+  },
+  "barrido": null,
+  "holguras": {
+   "tapaBandeja": 1,
+   "tapon": 0.5,
+   "servoRele": 1.3,
+   "usbSobreBorde": 4.2,
+   "jackSobreBorde": 7,
+   "puertaUmbral": 0.5
+  },
+  "ventanas": [],
+  "A4": [
+   {
+    "id": "b_ext_la",
+    "cabe": true
+   },
+   {
+    "id": "b_int_la",
+    "cabe": true
+   },
+   {
+    "id": "t_techo",
+    "cabe": true
+   },
+   {
+    "id": "t_pared_at",
+    "cabe": true
+   },
+   {
+    "id": "t_pared_iz",
+    "cabe": true
+   },
+   {
+    "id": "c_frente",
+    "cabe": true
+   },
+   {
+    "id": "c_fondo",
+    "cabe": true
+   },
+   {
+    "id": "c_lado_de",
+    "cabe": true
+   },
+   {
+    "id": "c_lado_iz",
+    "cabe": true
+   },
+   {
+    "id": "marco_v",
+    "cabe": true
+   },
+   {
+    "id": "marco_p",
+    "cabe": true
+   },
+   {
+    "id": "corona",
+    "cabe": true
+   },
+   {
+    "id": "lazo",
+    "cabe": true
+   },
+   {
+    "id": "r_timpano",
+    "cabe": true
+   },
+   {
+    "id": "r_nieve",
+    "cabe": true
+   },
+   {
+    "id": "r_chimenea",
+    "cabe": true
+   },
+   {
+    "id": "arbol_g_a",
+    "cabe": true
+   },
+   {
+    "id": "arbol_g_b",
+    "cabe": true
+   },
+   {
+    "id": "arbol_c_a",
+    "cabe": true
+   },
+   {
+    "id": "arbol_c_b",
+    "cabe": true
+   },
+   {
+    "id": "estrella",
+    "cabe": true
+   },
+   {
+    "id": "caminito",
+    "cabe": true
+   },
+   {
+    "id": "copo",
+    "cabe": true
+   }
+  ],
+  "piezas": 37,
+  "solidos": 85
+ }
+}

@@ -1,0 +1,14 @@
+% Las tres capas de una arquitectura IoT y qué parte del prototipo ocupa cada una.
+\begin{tikzpicture}[node distance=2mm,
+  capa/.style={rectangle, minimum width=2.6cm, minimum height=0.85cm,
+    fill=#1, text=white, font=\footnotesize\bfseries},
+  nuestro/.style={rectangle, draw=#1, fill=#1!8, thick, minimum height=0.85cm,
+    align=left, font=\footnotesize, text width=4.2cm},
+]
+  \node[capa=cApp] (ap) {Aplicación};
+  \node[capa=cProc, below=of ap] (rd) {Red};
+  \node[capa=cSensor, below=of rd] (pe) {Percepción};
+  \node[nuestro=cApp, right=3mm of ap] {AWS (IoT Core, Lambda, DynamoDB) y app móvil};
+  \node[nuestro=cProc, right=3mm of rd] {Wi-Fi + MQTT/TLS};
+  \node[nuestro=cSensor, right=3mm of pe] {Sensores y actuadores};
+\end{tikzpicture}

@@ -1,0 +1,14 @@
+% Paleta común para todos los diagramas
+\colorlet{cSensor}{blue!60!black}
+\colorlet{cProc}{orange!80!black}
+\colorlet{cAct}{green!45!black}
+\colorlet{cApp}{violet!70!black}
+\colorlet{cPower}{gray!70!black}
+
+\tikzset{
+  >={Stealth[length=2mm]},
+  flecha/.style={->, thick, draw=black!75},
+  caja/.style={rectangle, rounded corners=2pt, draw=#1, fill=#1!10, thick,
+    minimum width=2.3cm, minimum height=0.85cm, align=center, inner sep=2pt},
+  etiqueta/.style={font=\scriptsize, text=black!70, fill=white, inner sep=1pt},
+}

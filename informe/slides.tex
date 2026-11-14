@@ -1,0 +1,599 @@
+\documentclass[aspectratio=169,10pt]{beamer}
+
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{lmodern}
+\fi
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{qrcode}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,calc,fit,babel}
+\usepackage{pgfplots}
+\usepgfplotslibrary{statistics}
+
+\input{figuras/estilos}
+% Gráficos más chicos que en el informe
+\renewcommand{\anchografico}{7.2cm}
+\renewcommand{\altografico}{4.6cm}
+
+% Cuando los archivos de figuras/datos/ tengan las mediciones reales:
+% \datosdeejemplofalse
+
+% Enlace del video publicitario (también genera el código QR)
+\newcommand{\videourl}{https://youtu.be/PENDIENTE}
+
+% ---------------------------------------------------------------
+% Tema académico sobrio
+\usetheme{Boadilla}
+\definecolor{azul}{HTML}{1F3A5F}
+\definecolor{gris}{HTML}{5F6B7A}
+\usecolortheme[named=azul]{structure}
+\setbeamercolor{block title}{bg=azul!12, fg=azul}
+\setbeamercolor{block body}{bg=azul!4}
+\setbeamercolor{alerted text}{fg=cProc}
+\setbeamertemplate{blocks}[rounded][shadow=false]
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{itemize items}[circle]
+\setbeamertemplate{bibliography item}[text]
+\setbeamerfont{frametitle}{series=\bfseries}
+
+% Estilos TikZ propios de las diapositivas (fuera de los frames por el #)
+\tikzset{
+  capa/.style={rectangle, minimum width=2.4cm, minimum height=0.9cm,
+    fill=#1, text=white, font=\small\bfseries},
+  nuestro/.style={rectangle, draw=#1, fill=#1!8, thick, minimum height=0.9cm,
+    align=left, font=\small, text width=3.2cm},
+  n/.style={caja=#1, minimum width=1.8cm, minimum height=1cm},
+  antes/.style={caja=cPower, minimum width=3.1cm, minimum height=0.75cm, font=\small},
+  ahora/.style={caja=cAct, minimum width=3.1cm, minimum height=0.75cm, font=\small},
+  paso/.style={circle, fill=azul, text=white, font=\small\bfseries, minimum size=6mm, inner sep=0pt},
+}
+
+% Foto de referencia con leyenda: \foto{archivo}{alto}{título}{detalle}
+\newcommand{\foto}[4]{%
+  \begin{minipage}[t]{\linewidth}\centering
+    \fcolorbox{gris!40}{white}{\begin{minipage}[c][#2][c]{0.92\linewidth}\centering
+      \includegraphics[height=0.94\dimexpr#2\relax, width=0.94\linewidth, keepaspectratio]{figuras/fotos/#1}
+    \end{minipage}}\\[1mm]
+    {\footnotesize\bfseries #3}\\[-0.5mm]
+    {\scriptsize\color{gris} #4}
+  \end{minipage}}
+% Foto propia con leyenda (placeholder si aún no está en Imagenes/)
+\newcommand{\fotopropia}[5]{%
+  \begin{minipage}[t]{\linewidth}\centering
+    \imagen{#1}{0.95\linewidth}{#2}{#5}\\[1mm]
+    {\footnotesize\bfseries #3}\\[-0.5mm]
+    {\scriptsize\color{gris} #4}
+  \end{minipage}}
+\setlength{\fboxsep}{0pt}
+\setlength{\fboxrule}{0.3pt}
+
+% Crédito de imágenes, sobre el pie de página
+\newcommand{\credito}[1]{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \node[anchor=south west, font=\tiny, text=gris, inner sep=0pt, text width=15cm]
+      at ([xshift=4mm, yshift=6.5mm]current page.south west) {#1};
+  \end{tikzpicture}}
+
+\title[Seguridad residencial IoT]{Sistema inteligente de seguridad residencial IoT\\
+  con monitoreo inalámbrico y alertas en tiempo real}
+\subtitle{Presentación final (P2)}
+\author[Salcedo, Quispe, Iribar, Salazar]{Ariann Abigail Salcedo Quiroz \and
+  Diego Randolp Quispe Apaza \\ Federico Iribar Casanova \and
+  Sofia del Pilar Salazar Mendoza}
+\institute[UTEC]{Internet de las Cosas\\Universidad de Ingeniería y Tecnología}
+\date[Nov. 2026]{Noviembre de 2026}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+% ===============================================================
+\section{Introducción}
+
+\begin{frame}{Introducción}
+  \begin{itemize}
+    \item Una vivienda suele protegerse con piezas que no se hablan: cerradura, alarma y, con suerte, una cámara.
+    \item Cada una trabaja sola. La casa tarda en notar un riesgo y casi nunca reacciona por sí misma.
+    \item Hoy un ESP32 de pocos dólares puede leer sensores, decidir y avisar en tiempo real \cite{alfuqaha2015survey, oktafiani2025esp32}.
+  \end{itemize}
+  \vspace{4mm}
+  \begin{block}{Nuestra propuesta en cinco etapas}
+    \centering
+    \begin{tikzpicture}[font=\small, node distance=4mm]
+      \node[caja=cSensor, minimum width=2.3cm] (a) {Detectar\\{\scriptsize 3 sensores}};
+      \node[caja=cProc, minimum width=2.3cm, right=of a] (b) {Decidir\\{\scriptsize ESP32, 10\,s}};
+      \node[caja=cAct, minimum width=2.3cm, right=of b] (c) {Responder\\{\scriptsize buzzer y pestillo}};
+      \node[caja=cApp, minimum width=2.3cm, right=of c] (d) {Avisar\\{\scriptsize MQTT a AWS}};
+      \node[caja=cApp, minimum width=2.3cm, right=of d] (e) {Medir\\{\scriptsize 6 métricas}};
+      \foreach \u/\v in {a/b, b/c, c/d, d/e} \draw[flecha] (\u) -- (\v);
+    \end{tikzpicture}
+  \end{block}
+\end{frame}
+
+% ===============================================================
+\section{Problemática}
+
+\begin{frame}{Problemática}
+  Una intrusión puede empezar abriendo una puerta, con movimiento en una zona vacía o con golpes contra una estructura \cite{arinde2024multisensor}.
+  \vspace{3mm}
+  \begin{columns}[T]
+    \column{0.32\textwidth}
+    \begin{block}{Desconexión}
+      Nadie relaciona una apertura con un golpe de hace 5 segundos. Se pierden los primeros segundos.
+    \end{block}
+    \column{0.32\textwidth}
+    \begin{block}{Costo}
+      Lo comercial es caro. Lo barato trae un solo sensor y rara vez avisa a distancia \cite{oktafiani2025esp32}.
+    \end{block}
+    \column{0.32\textwidth}
+    \begin{block}{Sin métricas}
+      El dueño no sabe cuántas alertas fueron falsas ni cuánto tardó un aviso \cite{pugh2015fusion}.
+    \end{block}
+  \end{columns}
+  \vspace{3mm}
+  \begin{alertblock}{Problema}
+    Falta un sistema integrado y barato que correlacione varios sensores, responda sin depender de Internet y mida su propio desempeño.
+  \end{alertblock}
+\end{frame}
+
+% ===============================================================
+\section{Marco teórico}
+
+\begin{frame}{Marco teórico}
+  \begin{columns}[T]
+    \column{0.47\textwidth}
+    \textbf{Arquitectura IoT por capas} \cite{alfuqaha2015survey, ray2018survey}\par\vspace{3mm}
+    \begin{tikzpicture}[node distance=2mm]
+      \node[capa=cApp] (ap) {Aplicación};
+      \node[capa=cProc, below=of ap] (rd) {Red};
+      \node[capa=cSensor, below=of rd] (pe) {Percepción};
+      \node[nuestro=cApp, right=3mm of ap] {AWS y app móvil};
+      \node[nuestro=cProc, right=3mm of rd] {Wi-Fi + MQTT/TLS};
+      \node[nuestro=cSensor, right=3mm of pe] {Sensores y actuadores};
+    \end{tikzpicture}\par\vspace{4mm}
+    \small
+    \begin{itemize}
+      \item MQTT publica y suscribe con 2 bytes de cabecera \cite{light2017mosquitto}.
+      \item Lo urgente se decide en el borde \cite{shi2016edge}.
+    \end{itemize}
+    \column{0.5\textwidth}
+    \textbf{Sensores}\par\vspace{2mm}
+    \begin{columns}[T]
+      \column{0.32\linewidth}\foto{pir.jpg}{2.4cm}{PIR HC-SR501}{Movimiento, 3 a 7\,m}
+      \column{0.32\linewidth}\foto{reed.jpg}{2.4cm}{Magnético MC-38}{Apertura de la puerta}
+      \column{0.32\linewidth}\foto{sw420.jpg}{2.4cm}{Vibración SW-420}{Golpes}
+    \end{columns}
+    \vspace{5mm}
+    \small
+    \begin{itemize}
+      \item AWS IoT Core es un broker MQTT administrado que autentica con certificados \cite{aws2026iot}.
+    \end{itemize}
+  \end{columns}
+  \credito{Fotos referenciales de Wikimedia Commons: PIR por Lethalattraction (CC BY-SA 4.0), reed switch por Satishbhandare (dominio público), SW-420 por Suyash Dwivedi (CC BY-SA 4.0).}
+\end{frame}
+
+% ===============================================================
+\section{Estado del arte}
+
+\begin{frame}{Estado del arte (2020 a 2026)}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.15}
+  \begin{tabular}{@{}l>{\raggedright\arraybackslash}p{7.4cm}>{\raggedright\arraybackslash}p{4.7cm}@{}}
+    \toprule
+    \textbf{Integrante} & \textbf{Trabajo} & \textbf{Qué tomamos} \\
+    \midrule
+    Ariann & Nannung et al. \cite{nannung2025iot}. ESP32-CAM, rostro al 95,31\,\%, relé y cerradura & Relé como respuesta física \\
+     & Oktafiani y Widhiantoro \cite{oktafiani2025esp32}. PIR en 7 de 10 sistemas ESP32 & PIR como sensor principal \\
+    \midrule
+    Diego & Aprilia y Purwanto \cite{aprilia2025boarding}. PIR + buzzer, 100\,\% hasta 3\,m, aviso en 8 a 9\,s & Ubicación del PIR, medir el aviso \\
+     & Jama et al. \cite{jama2026edge}. ESP32 decide en el borde y sigue con la red caída & Alarma local sin nube \\
+    \midrule
+    Federico & Mishra y Kertesz \cite{mishra2020mqtt}. MQTT es el protocolo que más crece & Elección de MQTT \\
+     & Bender et al. \cite{bender2021mqtt}. Seis brokers comparados en latencia y recursos & Cliente MQTT estándar, medir la latencia propia \\
+    \midrule
+    Sofia & Zhuang et al. \cite{zhuang2021intrusion}. Intrusos detectados por CSI de Wi-Fi en casas reales & Trabajo futuro, RSSI como métrica \\
+     & Arinde e Idowu \cite{arinde2024multisensor}. PIR + magnético + llamada GSM & La misma base de sensores \\
+    \bottomrule
+  \end{tabular}
+\end{frame}
+
+\begin{frame}{Del estado del arte al diseño}
+  \centering
+  \resizebox{\linewidth}{!}{\input{figuras/aportes}}
+  \vspace{5mm}
+  \begin{alertblock}{Lo que agregamos}
+    \centering Dos sensores deben coincidir, el pestillo espera a la puerta cerrada y el sistema se mide a sí mismo.
+  \end{alertblock}
+\end{frame}
+
+% ===============================================================
+\section{Metodología}
+
+\begin{frame}{Qué cambió desde el perfil}
+  \begin{columns}[c]
+    \column{0.52\textwidth}
+    \centering
+    \begin{tikzpicture}[font=\small]
+      \foreach \y/\a/\b in {0/Sirena de 12\,V/Buzzer SFM-20B, -0.8/Cerradura solenoide/Servo SG90 + pestillo, -1.6/Placa perforada/Shield de borneras, -2.4/Carcasa impresa en 3D/Casa de cartón reciclado, -3.2/Mosquitto en EC2/AWS IoT Core + Lambda, -4.0/App web/App móvil} {
+        \node[antes] (x) at (0,\y) {\a};
+        \node[ahora] (y) at (4.3,\y) {\b};
+        \draw[flecha] (x) -- (y);
+      }
+      \node[font=\scriptsize\bfseries, text=cPower] at (0,0.75) {Perfil P1};
+      \node[font=\scriptsize\bfseries, text=cAct] at (4.3,0.75) {Versión final};
+    \end{tikzpicture}
+    \column{0.46\textwidth}
+    \centering
+    \resizebox{\linewidth}{!}{\input{figuras/graf_corriente}}\par
+    {\footnotesize La fuente de 2\,A ya alcanza con margen.}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Componentes}
+  \begin{columns}[T]
+    \column{0.135\textwidth}\foto{esp32.jpg}{2.2cm}{ESP32}{Decide y publica}
+    \column{0.135\textwidth}\foto{rele.jpg}{2.2cm}{Relé}{Enciende el buzzer}
+    \column{0.135\textwidth}\fotopropia{buzzer.jpg}{2.2cm}{Buzzer}{Alarma}{Foto del buzzer SFM-20B}
+    \column{0.135\textwidth}\fotopropia{sg90.jpg}{2.2cm}{Servo SG90}{Pestillo}{Foto del servo SG90}
+    \column{0.135\textwidth}\fotopropia{lm2596.jpg}{2.2cm}{LM2596}{12 a 5\,V}{LM2596 con el multímetro en 5,0\,V}
+    \column{0.135\textwidth}\foto{esp32cam.jpg}{2.2cm}{ESP32-CAM}{Opcional}
+  \end{columns}
+  \vspace{4mm}
+  \begin{columns}[T]
+    \column{0.48\textwidth}
+    \begin{block}{Núcleo}
+      \small
+      \begin{itemize}
+        \item Sensores PIR, MC-38 y SW-420
+        \item Buzzer y servo como actuadores
+        \item Wi-Fi + MQTT/TLS hacia AWS IoT Core
+        \item App móvil con apertura por PIN y 6 métricas
+      \end{itemize}
+    \end{block}
+    \column{0.48\textwidth}
+    \begin{block}{ESP32 DevKit V1}
+      \small
+      \begin{itemize}
+        \item 240\,MHz, 520\,KB de SRAM, Wi-Fi de 2,4\,GHz
+        \item Hora NTP para medir la latencia
+        \item S/~40, barato como se recomendó
+      \end{itemize}
+    \end{block}
+  \end{columns}
+  \credito{Fotos referenciales de Wikimedia Commons: ESP32 por Edwiyanto, relé por Suyash Dwivedi, ESP32-CAM por Nowforever (CC BY-SA 4.0).}
+\end{frame}
+
+\begin{frame}{Diagrama de bloques}
+  \begin{columns}[c]
+    \column{0.66\textwidth}
+    \centering\resizebox{\linewidth}{!}{\input{figuras/bloques}}
+    \column{0.32\textwidth}
+    \small
+    \begin{itemize}
+      \item {\color{cSensor}\textbf{Azul}} sensores
+      \item {\color{cProc}\textbf{Naranja}} decisión local
+      \item {\color{cAct}\textbf{Verde}} actuación
+      \item {\color{cPower}\textbf{Gris}} energía
+      \item {\color{cApp}\textbf{Morado}} nube e interfaz
+    \end{itemize}
+  \end{columns}
+\end{frame}
+
+% ===============================================================
+\section{Implementación}
+
+\begin{frame}{Etapa 1 · Percepción e interconexiones}
+  \centering
+  \resizebox{0.92\linewidth}{!}{\input{figuras/conexiones}}
+  \vspace{3mm}
+  \begin{columns}[T]
+    \column{0.45\textwidth}
+    \small
+    \begin{itemize}
+      \item Servo con 5\,V del LM2596, nunca del ESP32
+      \item Todas las tierras unidas
+    \end{itemize}
+    \column{0.45\textwidth}
+    \small
+    \begin{itemize}
+      \item SW-420 a 3,3\,V
+      \item Relé con jumper en H
+    \end{itemize}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Etapa 2 · Decisión en el ESP32}
+  \begin{columns}[c]
+    \column{0.56\textwidth}
+    \centering
+    \resizebox{\linewidth}{!}{\input{figuras/ventana}}\par\vspace{5mm}
+    \small
+    \begin{itemize}
+      \item Un sensor solo es una \textbf{alerta leve}
+      \item Dos sensores distintos en 10\,s son un \textbf{evento crítico}
+      \item Cada 30\,s sale un latido con el RSSI
+    \end{itemize}
+    \column{0.42\textwidth}
+    \centering
+    \resizebox{!}{0.8\textheight}{\input{figuras/flujo}}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Etapa 3 · Actuación y energía}
+  \begin{columns}[c]
+    \column{0.55\textwidth}
+    \centering
+    \resizebox{\linewidth}{!}{\input{figuras/alimentacion}}
+    \column{0.42\textwidth}
+    \small
+    \begin{itemize}
+      \item El relé enciende el buzzer con la línea de 12\,V
+      \item El servo traba la puerta solo si el MC-38 la ve cerrada
+      \item Con la puerta abierta, el bloqueo espera
+      \item Un capacitor de 1000\,\textmu F evita que el ESP32 se reinicie
+    \end{itemize}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Etapa 4 · Nube en AWS, sin servidor propio}
+  \begin{columns}[c]
+    \column{0.55\textwidth}
+    \centering
+    \resizebox{\linewidth}{!}{%
+    \begin{tikzpicture}[font=\small, node distance=8mm and 14mm]
+      \node[n=cProc] (esp) {ESP32};
+      \node[n=cApp, right=18mm of esp] (iot) {IoT Core};
+      \node[n=cApp, below=of iot] (db) {DynamoDB};
+      \node[n=cApp, right=of iot] (lam) {Lambda};
+      \node[n=cApp, below=of lam] (api) {API Gateway};
+      \node[n=cApp, below=of api] (app) {App móvil};
+      \draw[flecha, <->, dashed, draw=cApp] (esp) -- node[etiqueta, above] {MQTT/TLS} (iot);
+      \draw[flecha, draw=cApp] (iot) -- node[etiqueta, left] {reglas} (db);
+      \draw[flecha, draw=cApp] (lam) -- node[etiqueta, above] {abrir} (iot);
+      \draw[flecha, <->, draw=cApp] (lam) -- (db);
+      \draw[flecha, draw=cApp] (api) -- (lam);
+      \draw[flecha, <->, draw=cApp] (app) -- (api);
+    \end{tikzpicture}}
+    \column{0.42\textwidth}
+    \begin{block}{Seguridad}
+      \small
+      \begin{itemize}
+        \item El ESP32 entra con un certificado X.509, sin contraseña
+        \item La conexión la abre el ESP32, sin IP pública
+        \item El PIN vive solo en la Lambda
+        \item API limitada a 5 solicitudes por segundo
+      \end{itemize}
+    \end{block}
+  \end{columns}
+  \vspace{3mm}
+  {\small Tópicos: \texttt{casa/puerta/eventos}, \texttt{casa/puerta/estado} y \texttt{casa/puerta/comandos}}
+\end{frame}
+
+\begin{frame}{Etapas 4 y 5 · Recorrido de un mensaje y métricas}
+  \centering
+  \resizebox{!}{0.62\textheight}{\input{figuras/secuencia}}
+  \vspace{2mm}
+  \begin{columns}[T]
+    \column{0.45\textwidth}
+    \small
+    \begin{itemize}
+      \item Latencia, pérdida, disponibilidad
+      \item Eventos por sensor, falsas alarmas, RSSI
+    \end{itemize}
+    \column{0.5\textwidth}
+    \small
+    \begin{itemize}
+      \item Las métricas se calculan en una Lambda \pendiente{por crear}
+      \item La app consulta cada 10 a 30\,s
+    \end{itemize}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Aplicación móvil}
+  \centering
+  \imagen{app.png}{0.85\linewidth}{0.75\textheight}{Capturas de la aplicación móvil puestas lado a lado: estado del nodo, historial de eventos y gráficos de métricas.}
+\end{frame}
+
+\begin{frame}{Armado del prototipo}
+  \begin{columns}[T]
+    \column{0.32\textwidth}\fotopropia{prototipo.jpg}{2.45cm}{Casa terminada}{Cartón reciclado}{Casa terminada, vista frontal}
+    \column{0.32\textwidth}\fotopropia{compartimento.jpg}{2.45cm}{Electrónica en la base}{Oculta bajo la casa}{Base abierta con ESP32, relé, LM2596 y protoboard}
+    \column{0.32\textwidth}\fotopropia{puerta.jpg}{2.45cm}{Puerta}{Reed e imán}{Puerta abierta con el reed y el imán}
+  \end{columns}
+  \vspace{2mm}
+  \begin{columns}[T]
+    \column{0.32\textwidth}\fotopropia{sw420.jpg}{2.45cm}{SW-420}{Pared izquierda}{SW-420 pegado por dentro}
+    \column{0.32\textwidth}\fotopropia{servo.jpg}{2.45cm}{Servo y pestillo}{En el piso de la casa}{Servo con el pestillo trabando la puerta}
+    \column{0.32\textwidth}\fotopropia{prueba.jpg}{2.45cm}{Pruebas}{Equipo trabajando}{Equipo probando un evento crítico con la app abierta}
+  \end{columns}
+\end{frame}
+
+% ===============================================================
+\section{Resultados}
+
+\begin{frame}{Pruebas del backend en AWS}
+  \small
+  \renewcommand{\arraystretch}{1.25}
+  \centering
+  \begin{tabular}{@{}cl c@{}}
+    \toprule
+    \textbf{N.°} & \textbf{Prueba, sin el ESP32} & \textbf{Resultado} \\
+    \midrule
+    1 & Evento publicado a mano llega a \texttt{EventosPuerta} & \textcolor{cAct}{\textbf{Correcto}} \\
+    2 & PIN correcto, respuesta 200 y orden en \texttt{casa/puerta/comandos} & \textcolor{cAct}{\textbf{Correcto}} \\
+    3 & PIN incorrecto, respuesta 401 y registro \texttt{pin\_incorrecto} & \textcolor{cAct}{\textbf{Correcto}} \\
+    4 & \texttt{consultarPuerta} responde estado y eventos & \textcolor{cAct}{\textbf{Correcto}} \\
+    5 & \texttt{GET /estado} y \texttt{GET /eventos} desde el navegador & \textcolor{cAct}{\textbf{Correcto}} \\
+    6 & \texttt{POST /abrir} con \texttt{curl} & \textcolor{cAct}{\textbf{Correcto}} \\
+    \bottomrule
+  \end{tabular}\par\vspace{4mm}
+  {\small Falta la prueba con el ESP32 real \pendiente{actualizar}}
+\end{frame}
+
+\begin{frame}{Pruebas funcionales}
+  \small
+  \renewcommand{\arraystretch}{1.1}
+  \centering
+  \begin{tabular}{@{}cl>{\raggedright\arraybackslash}p{4.6cm}c@{}}
+    \toprule
+    \textbf{N.°} & \textbf{Escenario} & \textbf{Esperado} & \textbf{Resultado} \\
+    \midrule
+    1 & Solo PIR & Alerta leve & \pendiente{?} \\
+    2 & Golpe y apertura en menos de 10\,s & Buzzer y pestillo & \pendiente{?} \\
+    3 & PIR y apertura con más de 10\,s & Dos alertas leves & \pendiente{?} \\
+    4 & Crítico con la puerta abierta & El pestillo espera el cierre & \pendiente{?} \\
+    5 & Crítico sin Wi-Fi & Alarma local igual & \pendiente{?} \\
+    6 & Servo y buzzer a la vez & El ESP32 no se reinicia & \pendiente{?} \\
+    7 & Alerta marcada como falsa & Sube la tasa de falsas & \pendiente{?} \\
+    8 & Abrir desde la app con PIN & Pestillo suelto 3\,s, sin alarma & \pendiente{?} \\
+    9 & Abrir sin orden previa & Evento \texttt{puerta\_forzada} & \pendiente{?} \\
+    \bottomrule
+  \end{tabular}
+\end{frame}
+
+\begin{frame}{Latencia y enlace}
+  \begin{columns}[T]
+    \column{0.49\textwidth}
+    \centering
+    \resizebox{\linewidth}{!}{\input{figuras/graf_latencia}}\par
+    \small p95 = \pendiente{X}\,ms, meta 2\,s
+    \column{0.49\textwidth}
+    \centering
+    \resizebox{\linewidth}{!}{\input{figuras/graf_rssi}}\par
+    \small Disponibilidad \pendiente{X}\,\%, RSSI \pendiente{X}\,dBm
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Eventos y falsas alarmas}
+  \begin{columns}[c]
+    \column{0.52\textwidth}
+    \centering
+    \resizebox{\linewidth}{!}{\input{figuras/graf_eventos}}
+    \column{0.44\textwidth}
+    \begin{block}{En números}
+      \small
+      \begin{itemize}
+        \item Falsas alarmas \pendiente{X}\,\%
+        \item Críticos falsos \pendiente{X}
+        \item Pérdida de mensajes \pendiente{X}\,\%
+      \end{itemize}
+    \end{block}
+  \end{columns}
+\end{frame}
+
+% ===============================================================
+\section{Mercado}
+
+\begin{frame}{Mercado y modelo de negocio}
+  \centering
+  \resizebox{!}{1.9cm}{\input{figuras/mercado}}
+  \vspace{2mm}
+  \begin{columns}[c]
+    \column{0.5\textwidth}
+    \centering
+    \resizebox{!}{4.2cm}{\input{figuras/graf_costos}}
+    \column{0.45\textwidth}
+    \small
+    \begin{itemize}
+      \item Materiales del nodo por unos S/~160, sin buzzer ni servo
+      \item La alarma local funciona sin suscripción
+      \item La app muestra lo que una alarma barata no muestra
+      \item La nube cobra por uso, sin un servidor encendido
+    \end{itemize}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Video publicitario}
+  \begin{columns}[c]
+    \column{0.6\textwidth}
+    \centering
+    \imagen{video.jpg}{\linewidth}{5cm}{Fotograma del video con los cuatro integrantes y el prototipo.}
+    \column{0.36\textwidth}
+    \centering
+    \qrcode[height=3.2cm]{\videourl}\par\vspace{2mm}
+    {\footnotesize\url{\videourl}}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Demostración en vivo}
+  \begin{columns}[c]
+    \column{0.6\textwidth}
+    \begin{tikzpicture}[font=\small, node distance=5mm]
+      \node[paso] (p1) {1};
+      \node[right=3mm of p1, text width=6.6cm] {Pasar la mano frente al PIR. En la app aparece una \textbf{alerta leve}.};
+      \node[paso, below=8mm of p1] (p2) {2};
+      \node[right=3mm of p2, text width=6.6cm] {Golpear la puerta y abrirla. Suena el \textbf{buzzer} y, al cerrarla, el \textbf{pestillo} la traba.};
+      \node[paso, below=8mm of p2] (p3) {3};
+      \node[right=3mm of p3, text width=6.6cm] {Apagar el Wi-Fi y repetir. La alarma local sigue funcionando.};
+      \node[paso, below=8mm of p3] (p4) {4};
+      \node[right=3mm of p4, text width=6.6cm] {Abrir desde la app con el PIN. El pestillo se suelta 3\,s y vuelve a trabar.};
+      \node[paso, below=8mm of p4] (p5) {5};
+      \node[right=3mm of p5, text width=6.6cm] {Mostrar la latencia y la disponibilidad en la app.};
+    \end{tikzpicture}
+    \column{0.36\textwidth}
+    \begin{alertblock}{Red para la demo}
+      \small El Wi-Fi de la universidad pide iniciar sesión en una página, y el ESP32 no puede hacerlo. Usamos el punto de acceso de un celular.
+    \end{alertblock}
+  \end{columns}
+\end{frame}
+
+% ===============================================================
+\section{Conclusiones}
+
+\begin{frame}{Conclusiones y recomendaciones}
+  \begin{columns}[T]
+    \column{0.5\textwidth}
+    \begin{block}{Conclusiones}
+      \small
+      \begin{itemize}
+        \item La regla de 10\,s separa alertas leves de eventos críticos con una lógica simple
+        \item La alarma y el bloqueo no dependen de Internet
+        \item El peor caso bajó de 2,26\,A a unos 0,7\,A
+        \item AWS IoT Core y Lambda quitaron el servidor que había que mantener
+        \item \pendiente{Latencia p95 frente a la meta de 2\,s}
+      \end{itemize}
+    \end{block}
+    \column{0.46\textwidth}
+    \begin{block}{Recomendaciones}
+      \small
+      \begin{itemize}
+        \item Batería de respaldo
+        \item Inicio de sesión en la API con Amazon Cognito
+        \item PCB propia en lugar del protoboard
+        \item Varios nodos y zonas
+        \item ESP32-CAM, MQ-2 y detección por CSI \cite{zhuang2021intrusion}
+      \end{itemize}
+    \end{block}
+  \end{columns}
+\end{frame}
+
+% ===============================================================
+\begin{frame}{Referencias}
+  \tiny
+  \begin{thebibliography}{10}
+  \bibitem{alfuqaha2015survey} A. Al-Fuqaha et al., ``Internet of Things: A survey on enabling technologies, protocols, and applications,'' \emph{IEEE Commun. Surveys Tuts.}, vol. 17, no. 4, pp. 2347--2376, 2015.
+  \bibitem{oktafiani2025esp32} F. Oktafiani y D. Widhiantoro, ``Studi literatur penggunaan ESP32 untuk sistem keamanan lingkungan rumah,'' \emph{SNIV}, vol. 4, no. 1, pp. 267--274, 2025.
+  \bibitem{arinde2024multisensor} V. Arinde y L. Idowu, ``Multi-sensor intrusion detection system,'' arXiv:2406.05137, 2024.
+  \bibitem{pugh2015fusion} M. Pugh, J. Brewer y J. Kvam, ``Sensor fusion for intrusion detection under false alarm constraints,'' \emph{IEEE SAS}, pp. 1--6, 2015.
+  \bibitem{ray2018survey} P. P. Ray, ``A survey on Internet of Things architectures,'' \emph{J. King Saud Univ. Comput. Inf. Sci.}, vol. 30, no. 3, pp. 291--319, 2018.
+  \bibitem{nannung2025iot} J. Nannung et al., ``Development of an IoT-based home security system prototype using multisensors and ESP32-CAM,'' \emph{JESSI}, vol. 6, no. 2, pp. 168--177, 2025.
+  \bibitem{light2017mosquitto} R. A. Light, ``Mosquitto: server and client implementation of the MQTT protocol,'' \emph{JOSS}, vol. 2, no. 13, p. 265, 2017.
+  \bibitem{aws2026iot} Amazon Web Services, ``What is AWS IoT?,'' \emph{AWS IoT Core Developer Guide}, consultado en nov. 2026.
+  \bibitem{shi2016edge} W. Shi et al., ``Edge computing: Vision and challenges,'' \emph{IEEE Internet Things J.}, vol. 3, no. 5, pp. 637--646, 2016.
+  \bibitem{aprilia2025boarding} M. W. Aprilia y A. Purwanto, ``IoT-based boarding room security system using PIR sensor and ESP32-CAM with Telegram notification,'' \emph{J. Ilmu Fisika dan Terapannya}, vol. 12, no. 2, pp. 95--102, 2025.
+  \bibitem{jama2026edge} Y. A. Jama, K. W. Muse y R. M. Ali, ``Empirical evaluation of a layered edge--cloud IoT security architecture for resilient residential access control,'' \emph{Open Res. Africa}, vol. 9, p. 35, 2026.
+  \bibitem{mishra2020mqtt} B. Mishra y A. Kertesz, ``The use of MQTT in M2M and IoT systems: A survey,'' \emph{IEEE Access}, vol. 8, pp. 201071--201086, 2020.
+  \bibitem{bender2021mqtt} M. Bender et al., ``Open-source MQTT evaluation,'' \emph{IEEE CCNC}, pp. 1--4, 2021.
+  \bibitem{zhuang2021intrusion} W. Zhuang et al., ``Develop an adaptive real-time indoor intrusion detection system based on empirical analysis of OFDM subcarriers,'' \emph{Sensors}, vol. 21, no. 7, art. 2287, 2021.
+  \end{thebibliography}
+\end{frame}
+
+\end{document}

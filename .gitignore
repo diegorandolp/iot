@@ -1,0 +1,30 @@
+# Secretos: nunca al repositorio
+privado/
+secrets.h
+*.pem
+*.crt
+*.key
+.env
+.env.*
+!.env.example
+
+# LaTeX
+*.aux
+*.log
+*.out
+*.nav
+*.snm
+*.toc
+*.vrb
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+
+# Generados
+entregas/
+node_modules/
+esp32/**/build/
+
+# Sistema
+.DS_Store
+Thumbs.db

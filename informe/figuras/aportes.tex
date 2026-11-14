@@ -1,0 +1,32 @@
+% Qué tomamos del estado del arte en cada etapa del prototipo, y qué agregamos.
+\begin{tikzpicture}[font=\footnotesize,
+  etapa/.style={caja=#1, minimum width=2.2cm, minimum height=0.8cm, font=\footnotesize\bfseries},
+  ref/.style={rectangle, rounded corners=1.5pt, draw=black!30, fill=white,
+    font=\scriptsize, minimum width=2.2cm, minimum height=0.5cm},
+  nuevo/.style={rectangle, rounded corners=1.5pt, draw=#1, fill=#1!15, thick,
+    font=\scriptsize, minimum width=2.2cm, minimum height=0.55cm, align=center},
+]
+  \node[etapa=cSensor] (s1) at (0,0)    {Detectar};
+  \node[etapa=cProc]   (s2) at (2.6,0)  {Decidir};
+  \node[etapa=cAct]    (s3) at (5.2,0)  {Responder};
+  \node[etapa=cApp]    (s4) at (7.8,0)  {Avisar};
+  \node[etapa=cApp]    (s5) at (10.4,0) {Medir};
+  \foreach \a/\b in {s1/s2, s2/s3, s3/s4, s4/s5} \draw[flecha] (\a) -- (\b);
+
+  % Trabajos previos que inspiran cada etapa
+  \node[ref] at (0,1.05)    {PIR + magnético \cite{arinde2024multisensor}};
+  \node[ref] at (0,1.65)    {PIR en 7 de 10 \cite{oktafiani2025esp32}};
+  \node[ref] at (2.6,1.05)  {Decidir en el borde \cite{jama2026edge}};
+  \node[ref] at (5.2,1.05)  {Relé y actuador \cite{nannung2025iot}};
+  \node[ref] at (5.2,1.65)  {Buzzer local \cite{aprilia2025boarding}};
+  \node[ref] at (7.8,1.05)  {MQTT \cite{mishra2020mqtt}};
+  \node[ref] at (7.8,1.65)  {Brokers compatibles \cite{bender2021mqtt}};
+  \node[ref] at (10.4,1.05) {Tiempo de aviso \cite{aprilia2025boarding}};
+  \node[ref] at (10.4,1.65) {Señal Wi-Fi \cite{zhuang2021intrusion}};
+  \node[font=\scriptsize\itshape, text=black!55, anchor=east] at (-1.25,1.35) {Estado del arte};
+
+  % Lo que agrega este proyecto
+  \node[nuevo=cProc] at (2.6,-1.0)  {Correlación\\de 2 sensores};
+  \node[nuevo=cAct]  at (5.2,-1.0)  {Bloqueo solo con\\puerta cerrada};  \node[nuevo=cApp]  at (10.4,-1.0) {6 métricas\\propias};
+  \node[font=\scriptsize\itshape, text=black!55, anchor=east] at (-1.25,-1.0) {Aporte propio};
+\end{tikzpicture}

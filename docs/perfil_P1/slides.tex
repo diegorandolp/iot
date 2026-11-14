@@ -1,0 +1,389 @@
+\documentclass[aspectratio=169,10pt]{beamer}
+
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{lmodern}
+\fi
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,calc,babel}
+
+\input{figuras/estilos}
+
+% ---------------------------------------------------------------
+% Tema académico sobrio
+\usetheme{Boadilla}
+\definecolor{azul}{HTML}{1F3A5F}
+\definecolor{gris}{HTML}{5F6B7A}
+\usecolortheme[named=azul]{structure}
+\setbeamercolor{block title}{bg=azul!12, fg=azul}
+\setbeamercolor{block body}{bg=azul!4}
+\setbeamercolor{alerted text}{fg=cProc}
+\setbeamertemplate{blocks}[rounded][shadow=false]
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{itemize items}[circle]
+\setbeamertemplate{bibliography item}[text]
+\setbeamerfont{frametitle}{series=\bfseries}
+
+% Estilos TikZ propios de las diapositivas (fuera de los frames por el #)
+\tikzset{
+  f/.style={caja=#1, minimum width=1.85cm, minimum height=0.95cm},
+  d/.style={diamond, aspect=1.5, draw=cProc, fill=cProc!10, thick, align=center,
+    inner sep=0pt, minimum width=1.9cm, font=\scriptsize},
+  capa/.style={rectangle, minimum width=2.4cm, minimum height=0.9cm,
+    fill=#1, text=white, font=\small\bfseries},
+  nuestro/.style={rectangle, draw=#1, fill=#1!8, thick, minimum height=0.9cm,
+    align=left, font=\small, text width=3.2cm},
+  n/.style={caja=#1, minimum width=1.8cm, minimum height=1cm},
+}
+
+% Foto de referencia con leyenda: \foto{archivo}{alto}{título}{detalle}
+\newcommand{\foto}[4]{%
+  \begin{minipage}[t]{\linewidth}\centering
+    \fcolorbox{gris!40}{white}{\begin{minipage}[c][#2][c]{0.92\linewidth}\centering
+      \includegraphics[height=0.94\dimexpr#2\relax, width=0.94\linewidth, keepaspectratio]{figuras/fotos/#1}
+    \end{minipage}}\\[1mm]
+    {\footnotesize\bfseries #3}\\[-0.5mm]
+    {\scriptsize\color{gris} #4}
+  \end{minipage}}
+\setlength{\fboxsep}{0pt}
+\setlength{\fboxrule}{0.3pt}
+
+% Crédito de imágenes, sobre el pie de página
+\newcommand{\credito}[1]{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \node[anchor=south west, font=\tiny, text=gris, inner sep=0pt, text width=15cm]
+      at ([xshift=4mm, yshift=6.5mm]current page.south west) {#1};
+  \end{tikzpicture}}
+
+\title[Seguridad residencial IoT]{Sistema inteligente de seguridad residencial IoT\\
+  con monitoreo inalámbrico y alertas en tiempo real}
+\subtitle{Perfil de proyecto (P1)}
+\author[Salcedo, Quispe, Iribar, Salazar]{Ariann Abigail Salcedo Quiroz \and
+  Diego Randolp Quispe Apaza \\ Federico Iribar Casanova \and
+  Sofia del Pilar Salazar Mendoza}
+\institute[UTEC]{Internet de las Cosas\\Universidad de Ingeniería y Tecnología}
+\date[Set. 2026]{Setiembre de 2026}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+% ===============================================================
+\section{Introducción}
+
+\begin{frame}{Introducción}
+  \begin{itemize}
+    \item Una vivienda suele protegerse con piezas que no se hablan: cerradura, alarma y, con suerte, una cámara.
+    \item Cada una trabaja sola. La casa tarda en notar un riesgo y casi nunca reacciona por sí misma.
+    \item Hoy un ESP32 de pocos dólares puede leer sensores, decidir y avisar en tiempo real \cite{alfuqaha2015survey, oktafiani2025esp32}.
+  \end{itemize}
+  \vspace{4mm}
+  \begin{block}{Propuesta}
+    \centering
+    \begin{tikzpicture}[font=\small, node distance=6mm]
+      \node[caja=cSensor, minimum width=2.9cm] (a) {Detectar\\{\scriptsize PIR, magnético, vibración}};
+      \node[caja=cProc, minimum width=2.9cm, right=of a] (b) {Decidir\\{\scriptsize ESP32, ventana de 10\,s}};
+      \node[caja=cAct, minimum width=2.9cm, right=of b] (c) {Responder\\{\scriptsize sirena y cerradura}};
+      \node[caja=cApp, minimum width=2.9cm, right=of c] (d) {Avisar y medir\\{\scriptsize app web en AWS}};
+      \foreach \u/\v in {a/b, b/c, c/d} \draw[flecha] (\u) -- (\v);
+    \end{tikzpicture}
+  \end{block}
+\end{frame}
+
+% ===============================================================
+\section{Problemática}
+
+\begin{frame}{Problemática}
+  Una intrusión puede empezar abriendo una puerta, con movimiento en una zona vacía o con golpes contra una estructura. Los sistemas recientes combinan PIR y contactos magnéticos para alertar apenas empieza el acceso \cite{arinde2024multisensor}.
+  \vspace{3mm}
+  \begin{columns}[T]
+    \column{0.32\textwidth}
+    \begin{block}{Desconexión}
+      Nadie relaciona una apertura con un golpe de hace 5 segundos. Se pierden los primeros segundos.
+    \end{block}
+    \column{0.32\textwidth}
+    \begin{block}{Costo}
+      Lo comercial es caro. Lo barato trae un solo sensor y rara vez avisa a distancia \cite{oktafiani2025esp32}.
+    \end{block}
+    \column{0.32\textwidth}
+    \begin{block}{Sin métricas}
+      El dueño no sabe cuántas alertas fueron falsas ni cuánto tardó un aviso \cite{pugh2015fusion}.
+    \end{block}
+  \end{columns}
+  \vspace{3mm}
+  \begin{alertblock}{Problema}
+    Falta un sistema integrado y barato que correlacione varios sensores, responda sin depender de Internet y mida su propio desempeño.
+  \end{alertblock}
+\end{frame}
+
+% ===============================================================
+\section{Marco teórico}
+
+\begin{frame}{Marco teórico: arquitectura y sensores}
+  \begin{columns}[T]
+    \column{0.47\textwidth}
+    \textbf{Arquitectura IoT por capas} \cite{alfuqaha2015survey, ray2018survey}\par\vspace{3mm}
+    \begin{tikzpicture}[node distance=2mm]
+      \node[capa=cApp] (ap) {Aplicación};
+      \node[capa=cProc, below=of ap] (rd) {Red};
+      \node[capa=cSensor, below=of rd] (pe) {Percepción};
+      \node[nuestro=cApp, right=3mm of ap] {App web en EC2};
+      \node[nuestro=cProc, right=3mm of rd] {Wi-Fi + MQTT/TLS};
+      \node[nuestro=cSensor, right=3mm of pe] {Sensores y actuadores};
+    \end{tikzpicture}
+    \column{0.5\textwidth}
+    \textbf{Sensores}\par\vspace{2mm}
+    \begin{columns}[T]
+      \column{0.32\linewidth}\foto{pir.jpg}{2.4cm}{PIR HC-SR501}{Calor infrarrojo en movimiento, 3 a 7\,m}
+      \column{0.32\linewidth}\foto{reed.jpg}{2.4cm}{Magnético MC-38}{Imán y reed switch, detecta apertura}
+      \column{0.32\linewidth}\foto{sw420.jpg}{2.4cm}{Vibración SW-420}{Golpes, comparador LM393}
+    \end{columns}\par\vspace{2mm}
+    \footnotesize El PIR aparece en 7 de 10 sistemas ESP32 revisados \cite{oktafiani2025esp32}.
+  \end{columns}
+  \credito{Fotos referenciales de Wikimedia Commons: PIR por Lethalattraction (CC BY-SA 4.0), reed switch por Satishbhandare (dominio público), SW-420 por Suyash Dwivedi (CC BY-SA 4.0).}
+\end{frame}
+
+\begin{frame}{Marco teórico: MQTT, borde y nube}
+  \begin{columns}[c]
+    \column{0.56\textwidth}
+    \centering
+    \begin{tikzpicture}[font=\small]
+      \node[n=cProc] (esp) at (0,0) {ESP32\\{\scriptsize publica}};
+      \node[n=cApp]  (brk) at (3.6,0) {Mosquitto\\{\scriptsize broker}};
+      \node[n=cApp]  (bk)  at (6.3,0.85) {Backend\\{\scriptsize suscrito}};
+      \node[n=cApp]  (web) at (6.3,-0.85){App web};
+      \draw[flecha] (esp) -- node[above=1pt, font=\tiny\ttfamily] {casa/eventos} (brk);
+      \draw[flecha] (brk.east) -- (bk.west);
+      \draw[flecha] (bk) -- (web);
+      \node[font=\scriptsize, text=gris, below=2mm of esp] {decide y actúa};
+      \node[font=\scriptsize, text=gris, below=2mm of brk] {TLS, puerto 8883};
+    \end{tikzpicture}
+    \column{0.42\textwidth}
+    \begin{itemize}
+      \item MQTT usa publicación y suscripción, con una cabecera mínima de 2 bytes \cite{alfuqaha2015survey, light2017mosquitto}.
+      \item Las decisiones urgentes se toman en el borde, sin esperar a Internet \cite{shi2016edge}.
+      \item La nube guarda los eventos y calcula métricas.
+      \item Correlacionar varios sensores ayuda a controlar las falsas alarmas \cite{walchli2009building, pugh2015fusion}.
+    \end{itemize}
+  \end{columns}
+\end{frame}
+
+% ===============================================================
+\section{Estado del arte}
+
+\begin{frame}{Estado del arte}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.15}
+  \begin{tabular}{@{}l>{\raggedright\arraybackslash}p{7.2cm}>{\raggedright\arraybackslash}p{4.9cm}@{}}
+    \toprule
+    \textbf{Integrante} & \textbf{Artículo} & \textbf{Qué tomamos} \\
+    \midrule
+    Ariann & Nannung et al. \cite{nannung2025iot}. ESP32-CAM con reconocimiento facial (95,31\%), DHT22 y MQ-2 & Relé con cerradura solenoide \\
+     & Oktafiani y Widhiantoro \cite{oktafiani2025esp32}. Revisión de 10 sistemas ESP32 & PIR como sensor principal \\
+    \midrule
+    Diego & Wälchli y Braun \cite{walchli2009building}. Oficina con 10 nodos, hasta 90\% menos comunicación & Reportar eventos, no lecturas \\
+     & Pugh et al. \cite{pugh2015fusion}. Fusión de varios PIR con límite de falsas alarmas & Regla de dos sensores en 10\,s \\
+    \midrule
+    Federico & Ray \cite{ray2018survey}. Arquitecturas IoT ordenadas por dominio & Modelo por capas \\
+     & Al-Fuqaha et al. \cite{alfuqaha2015survey}. Tecnologías y protocolos IoT & Elección de MQTT \\
+    \midrule
+    Sofia & Jin et al. \cite{jin2018wlid}. Intrusos detectados por RSSI de Wi-Fi, cerca de 100\% & RSSI como métrica del enlace \\
+     & Arinde e Idowu \cite{arinde2024multisensor}. PIR + magnético + aviso por GSM & La misma base de sensores, con Wi-Fi \\
+    \bottomrule
+  \end{tabular}
+\end{frame}
+
+% ===============================================================
+\section{Metodología}
+
+\begin{frame}{Componentes y microcontrolador}
+  \begin{columns}[T]
+    \column{0.5\textwidth}
+    \begin{block}{Núcleo (cumple los mínimos)}
+      \small
+      \begin{itemize}
+        \item 3 sensores: PIR, magnético MC-38 y SW-420
+        \item Actuadores: sirena 12\,V y cerradura solenoide
+        \item Inalámbrico: Wi-Fi 2,4\,GHz + MQTT/TLS
+        \item Interfaz: app web propia con métricas
+        \item Enclosure: carcasa impresa en 3D (PLA)
+        \item Relés de 2 canales, fuente de 12\,V y 2\,A
+      \end{itemize}
+    \end{block}
+    \column{0.46\textwidth}
+    \begin{block}{ESP32 DevKit V1}
+      \small
+      \begin{itemize}
+        \item Doble núcleo a 240\,MHz, 520\,KB de SRAM
+        \item Wi-Fi 802.11 b/g/n y Bluetooth 4.2
+        \item Lógica de 3,3\,V, entradas de sobra
+        \item Hora por NTP para medir la latencia
+        \item Barato, como se recomendó
+      \end{itemize}
+    \end{block}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Hardware de referencia}
+  \begin{columns}[T]
+    \column{0.19\textwidth}\foto{esp32.jpg}{2.5cm}{ESP32 DevKit V1}{Procesa y publica}
+    \column{0.19\textwidth}\foto{rele.jpg}{2.5cm}{Módulo de relés}{Conmuta cargas de 12\,V}
+    \column{0.19\textwidth}\foto{sirena.jpg}{2.5cm}{Sirena 12\,V}{Alerta sonora}
+    \column{0.19\textwidth}\foto{cerradura.jpg}{2.5cm}{Cerradura 12\,V}{Bloqueo de la puerta}
+    \column{0.19\textwidth}\foto{esp32cam.jpg}{2.5cm}{ESP32-CAM}{Opcional}
+  \end{columns}
+  \vspace{4mm}
+  \begin{block}{Opcionales, si alcanza el tiempo}
+    \small ESP32-CAM (OV2640, 2\,MP) que fotografía cada evento crítico y la sube al servidor. Lector de huella R307 para desarmar en el sitio. Sensor de humo MQ-2.
+  \end{block}
+  \credito{Fotos referenciales de Wikimedia Commons: ESP32 por Edwiyanto, relé por Suyash Dwivedi, ESP32-CAM por Nowforever (CC BY-SA 4.0), sirena por Harrihealey02 (CC BY-SA 3.0), cerradura electromagnética por Mooinglemur (dominio público).}
+\end{frame}
+
+\begin{frame}{Diagrama de bloques}
+  \begin{columns}[c]
+    \column{0.62\textwidth}
+    \centering{\let\footnotesize\scriptsize\let\scriptsize\tiny
+      \resizebox{!}{0.8\textheight}{\input{figuras/bloques}}}
+    \column{0.34\textwidth}
+    \small
+    \begin{itemize}
+      \item {\color{cSensor}\textbf{Azul}}: adquisición
+      \item {\color{cProc}\textbf{Naranja}}: procesamiento local
+      \item {\color{cAct}\textbf{Verde}}: actuación
+      \item {\color{cApp}\textbf{Morado}}: nube e interfaz
+    \end{itemize}
+    \vspace{3mm}
+    {\footnotesize Los actuadores usan la fuente de 12\,V, nunca el ESP32.}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Lógica de detección}
+  \begin{center}
+  \begin{tikzpicture}[font=\footnotesize]
+    \node[f=cSensor] (leer) at (0,0)     {Leer\\sensores};
+    \node[d]         (d1)   at (2.35,0)  {¿Sensor\\activo?};
+    \node[f=cSensor] (cor)  at (4.75,0)  {Correlacionar\\últimos 10\,s};
+    \node[d]         (d2)   at (7.15,0)  {¿Dos\\sensores?};
+    \node[f=cAct]    (act)  at (9.55,0)  {Sirena y\\bloqueo};
+    \node[f=cApp]    (pub)  at (11.9,0)  {Publicar\\por MQTT};
+    \draw[flecha] (leer) -- (d1);
+    \draw[flecha] (d1) -- node[above, font=\scriptsize] {Sí} (cor);
+    \draw[flecha] (cor) -- (d2);
+    \draw[flecha] (d2) -- node[above, font=\scriptsize] {Sí} (act);
+    \draw[flecha] (act) -- (pub);
+    \draw[flecha] (d1.north) -- ++(0,0.45) -| node[pos=0.25, above, font=\scriptsize] {No} (leer.north);
+    \draw[flecha, draw=cProc] (d2.south) -- ++(0,-0.4) -| node[pos=0.25, below, font=\scriptsize, text=cProc] {No: alerta leve} (pub.south);
+    \draw[flecha, draw=gris] (pub.north) -- ++(0,0.65) -| node[pos=0.25, above, font=\scriptsize, text=gris] {vuelve a leer} ([xshift=-3mm]leer.north);
+  \end{tikzpicture}
+  \end{center}
+  \begin{itemize}
+    \item \textbf{Alerta leve}: un solo sensor. Se publica el evento, sin sirena.
+    \item \textbf{Evento crítico}: dos sensores distintos en menos de 10\,s, por ejemplo vibración y luego apertura. Suenan la sirena y el bloqueo.
+    \item Cada mensaje lleva sensor, nivel, número de secuencia y hora. Cada 30\,s sale un latido con el RSSI.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Interfaz con procesamiento previo}
+  \begin{columns}[T]
+    \column{0.36\textwidth}
+    \begin{block}{AWS EC2 (t3.micro)}
+      \small
+      \begin{itemize}
+        \item Mosquitto (MQTT/TLS)
+        \item Backend en FastAPI
+        \item Base SQLite
+        \item App web
+      \end{itemize}
+      \footnotesize Todo en Docker Compose, así corre igual en una laptop.
+    \end{block}
+    \column{0.6\textwidth}
+    \small
+    \renewcommand{\arraystretch}{1.25}
+    \begin{tabular}{@{}l>{\raggedright\arraybackslash}p{5.2cm}@{}}
+      \toprule
+      \textbf{Métrica} & \textbf{Cálculo} \\
+      \midrule
+      Latencia & Recepción menos hora del evento. Promedio y p95 \\
+      Pérdida & Huecos en el número de secuencia \\
+      Disponibilidad & Latidos recibidos sobre los esperados \\
+      Eventos & Conteo por sensor y por hora \\
+      Falsas alarmas & Alertas que el usuario marca como falsas \\
+      Enlace & RSSI promedio en dBm \\
+      \bottomrule
+    \end{tabular}
+  \end{columns}
+\end{frame}
+
+% ===============================================================
+\section{Objetivos y alcances}
+
+\begin{frame}{Objetivos}
+  \begin{block}{Objetivo general}
+    Diseñar e implementar un sistema inteligente de seguridad residencial IoT que detecte intrusiones con tres sensores, clasifique el riesgo en un ESP32, responda con sirena y bloqueo, y avise por Wi-Fi a una app web que mida su propio desempeño.
+  \end{block}
+  \textbf{Objetivos específicos}
+  \begin{columns}[T]
+    \column{0.48\textwidth}
+    \begin{itemize}
+      \item Detectar movimiento, apertura y vibración
+      \item Clasificar cada evento como leve o crítico con la regla de 10\,s
+      \item Activar sirena y cerradura sin depender de Internet
+    \end{itemize}
+    \column{0.48\textwidth}
+    \begin{itemize}
+      \item Alertas en menos de 2\,s (p95) vía MQTT a AWS
+      \item App web con 6 métricas de desempeño
+      \item Hardware dentro de una carcasa 3D
+      \item (Opcional) Huella y ESP32-CAM
+    \end{itemize}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Alcances y limitaciones}
+  \begin{columns}[T]
+    \column{0.45\textwidth}
+    \begin{block}{Alcances}
+      \small
+      Una zona de prueba con una puerta, un PIR y un sensor de vibración. Incluye un nodo ESP32, sirena, cerradura, servidor en AWS y app web.\par\vspace{2mm}
+      Huella, cámara y humo quedan como opcionales.
+    \end{block}
+    \column{0.51\textwidth}
+    \begin{alertblock}{Limitaciones}
+      \small
+      \begin{itemize}
+        \item Un solo nodo, PIR hasta 7\,m y Wi-Fi de 2,4\,GHz
+        \item Sin Internet la sirena sigue, pero la app no recibe eventos
+        \item Sin batería de respaldo
+        \item No cubre sabotaje del cableado ni interferencia de radio
+        \item Si el laboratorio bloquea el puerto 8883, usamos un hotspot
+      \end{itemize}
+    \end{alertblock}
+  \end{columns}
+\end{frame}
+
+% ===============================================================
+\begin{frame}{Referencias}
+  \scriptsize
+  \begin{thebibliography}{10}
+  \bibitem{alfuqaha2015survey} A. Al-Fuqaha et al., ``Internet of Things: A survey on enabling technologies, protocols, and applications,'' \emph{IEEE Commun. Surveys Tuts.}, vol. 17, no. 4, pp. 2347--2376, 2015.
+  \bibitem{oktafiani2025esp32} F. Oktafiani y D. Widhiantoro, ``Studi literatur penggunaan ESP32 untuk sistem keamanan lingkungan rumah,'' \emph{SNIV}, vol. 4, no. 1, pp. 267--274, 2025.
+  \bibitem{arinde2024multisensor} V. Arinde y L. Idowu, ``Multi-sensor intrusion detection system,'' arXiv:2406.05137, 2024.
+  \bibitem{pugh2015fusion} M. Pugh, J. Brewer y J. Kvam, ``Sensor fusion for intrusion detection under false alarm constraints,'' \emph{IEEE SAS}, pp. 1--6, 2015.
+  \bibitem{ray2018survey} P. P. Ray, ``A survey on Internet of Things architectures,'' \emph{J. King Saud Univ. Comput. Inf. Sci.}, vol. 30, no. 3, pp. 291--319, 2018.
+  \bibitem{nannung2025iot} J. Nannung et al., ``Development of an IoT-based home security system prototype using multisensors and ESP32-CAM,'' \emph{JESSI}, vol. 6, no. 2, pp. 168--177, 2025.
+  \bibitem{light2017mosquitto} R. A. Light, ``Mosquitto: server and client implementation of the MQTT protocol,'' \emph{JOSS}, vol. 2, no. 13, p. 265, 2017.
+  \bibitem{shi2016edge} W. Shi et al., ``Edge computing: Vision and challenges,'' \emph{IEEE Internet Things J.}, vol. 3, no. 5, pp. 637--646, 2016.
+  \bibitem{walchli2009building} M. Wälchli y T. Braun, ``Building intrusion detection with a wireless sensor network,'' \emph{ADHOCNETS 2009}, LNICST 28, pp. 607--622, 2010.
+  \bibitem{jin2018wlid} Y. Jin et al., ``A whole-home level intrusion detection system using WiFi-enabled IoT,'' \emph{IWCMC}, pp. 494--499, 2018.
+  \end{thebibliography}
+\end{frame}
+
+\end{document}

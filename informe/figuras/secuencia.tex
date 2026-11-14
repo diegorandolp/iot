@@ -1,0 +1,37 @@
+% Recorrido de un evento hasta la app, de una orden de abrir hasta el ESP32,
+% y dónde se mide la latencia.
+\begin{tikzpicture}[font=\footnotesize,
+  cabeza/.style={caja=#1, minimum width=2.1cm, minimum height=0.8cm},
+  vida/.style={draw=black!25, dashed},
+  msg/.style={flecha},
+  txt/.style={font=\scriptsize, text=black!75, fill=white, inner sep=1pt},
+  fase/.style={font=\scriptsize\itshape, text=black!55, anchor=west},
+]
+  \node[cabeza=cProc] (e) at (0,0)    {ESP32};
+  \node[cabeza=cApp]  (i) at (2.9,0)  {IoT Core};
+  \node[cabeza=cApp]  (d) at (5.8,0)  {DynamoDB};
+  \node[cabeza=cApp]  (l) at (8.7,0)  {API Gateway\\+ Lambda};
+  \node[cabeza=cApp]  (w) at (11.6,0) {App móvil};
+  \foreach \n in {e,i,d,l,w} \draw[vida] (\n.south) -- ++(0,-5.3);
+
+  % Un evento sube y la app lo consulta
+  \node[fase] at (-1.1,-0.85) {Evento};
+  \draw[msg] (0,-1.2) -- node[txt, above] {evento (TLS, 8883)} (2.9,-1.2);
+  \draw[msg] (2.9,-1.7) -- node[txt, above] {regla: guarda} (5.8,-1.7);
+  \draw[msg, dashed] (11.6,-2.3) -- node[txt, above] {GET /eventos} (8.7,-2.3);
+  \draw[msg] (8.7,-2.8) -- node[txt, above] {consulta} (5.8,-2.8);
+  \draw[msg] (8.7,-3.3) -- node[txt, above] {eventos} (11.6,-3.3);
+
+  % La app abre la puerta
+  \draw[black!15] (-1.1,-3.7) -- (12.7,-3.7);
+  \node[fase] at (-1.1,-4.0) {Abrir};
+  \draw[msg, dashed] (11.6,-4.3) -- node[txt, above] {POST /abrir + PIN} (8.7,-4.3);
+  \draw[msg] (8.7,-4.8) -- node[txt, above, pos=0.3] {orden} (2.9,-4.8);
+  \draw[msg] (2.9,-5.3) -- node[txt, above] {servo 3\,s} (0,-5.3);
+
+  % Marcas de tiempo
+  \fill[cProc] (0,-1.2) circle (2pt) node[left, font=\scriptsize, text=cProc] {$t_e$};
+  \fill[cApp] (2.9,-1.7) circle (2pt) node[left, font=\scriptsize, text=cApp, yshift=-4pt] {$t_r$};
+  \node[font=\scriptsize, align=left, anchor=north west] at (-1.1,-5.6)
+    {Latencia $= t_r - t_e$\quad($t_e$ con hora NTP, $t_r$ la agrega la regla)};
+\end{tikzpicture}

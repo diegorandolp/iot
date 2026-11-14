@@ -1,0 +1,32 @@
+% Árbol de alimentación: de la fuente de 12 V a cada módulo.
+\begin{tikzpicture}[font=\footnotesize,
+  v12/.style={flecha, draw=red!65!black},
+  v5/.style={flecha, draw=cPower},
+  v3/.style={flecha, draw=cProc},
+  riel/.style={font=\scriptsize\bfseries},
+]
+  \node[caja=cPower, minimum width=1.9cm] (psu) at (0,0)    {Fuente\\{\scriptsize 12\,V, 2\,A}};
+  \node[caja=cAct,   minimum width=1.9cm] (rel) at (3.2,1.1) {Relé CH1};
+  \node[caja=cAct,   minimum width=1.9cm] (buz) at (6.2,1.1) {Buzzer};
+  \node[caja=cPower, minimum width=1.9cm] (lm)  at (3.2,-1.1) {LM2596};
+
+  \node[caja=cProc,   minimum width=1.9cm] (esp) at (6.2,-0.5) {ESP32};
+  \node[caja=cSensor, minimum width=1.9cm] (pir) at (6.2,-1.55) {PIR};
+  \node[caja=cAct,    minimum width=1.9cm] (srv) at (6.2,-2.6) {Servo};
+  \node[caja=cSensor, minimum width=1.9cm] (vib) at (9.2,-0.5) {SW-420};
+
+  \draw[v12, -] (psu.east) -- ++(0.5,0) coordinate (j12);
+  \draw[v12] (j12) |- (rel.west);
+  \draw[v12] (j12) |- (lm.west);
+  \draw[v12] (rel) -- (buz);
+  \draw[v5, -] (lm.east) -- ++(0.5,0) coordinate (j5);
+  \draw[v5] (j5) |- (esp.west);
+  \draw[v5] (j5) |- (pir.west);
+  \draw[v5] (j5) |- (srv.west);
+  \draw[v3] (esp) -- (vib);
+
+  \node[riel, text=red!65!black, above] at (1.6,1.1) {12\,V};
+  \node[riel, text=cPower, anchor=east] at (4.55,-2.6) {5,0\,V};
+  \node[riel, text=cProc, above] at (7.7,-0.5) {3,3\,V};
+  \node[font=\scriptsize, text=black!55, right=2pt of srv] {+ 1000\,\textmu F};
+\end{tikzpicture}

@@ -1,0 +1,45 @@
+\begin{tikzpicture}[
+  font=\footnotesize,
+  inicio/.style={rectangle, rounded corners=3.5mm, draw=black!70, fill=black!8, thick,
+    minimum width=2cm, minimum height=0.7cm},
+  proceso/.style={caja=cSensor, minimum width=2.8cm, minimum height=0.8cm},
+  accion/.style={caja=cAct, minimum width=2.8cm, minimum height=0.8cm},
+  aviso/.style={caja=cProc, minimum width=2.4cm, minimum height=0.8cm},
+  red/.style={caja=cApp, minimum width=2.8cm, minimum height=0.8cm},
+  decision/.style={diamond, aspect=2, draw=cProc, fill=cProc!10, thick,
+    align=center, inner sep=1pt},
+  si/.style={font=\scriptsize, text=black!70},
+]
+  \node[inicio]   (start) at (0,0)     {Inicio};
+  \node[proceso]  (conf)  at (0,-1.15) {Conectar Wi-Fi,\\NTP y AWS IoT};
+  \node[proceso]  (leer)  at (0,-2.45) {Leer sensores};
+  \node[decision] (d1)    at (0,-3.9)  {¿Sensor\\activo?};
+  \node[decision] (d2)    at (0,-5.7)  {¿Otro sensor\\en 10\,s?};
+  \node[accion]   (crit)  at (0,-7.4)  {Sonar buzzer};
+  \node[decision] (d3)    at (0,-8.95) {¿Puerta\\cerrada?};
+  \node[accion]   (lock)  at (0,-10.5) {Cerrar pestillo};
+  \node[red]      (pub)   at (0,-11.8) {Publicar evento};
+  \node[aviso]    (leve)  at (3.5,-5.7) {Alerta leve};
+  \node[aviso]    (pend)  at (-3.5,-8.95) {Esperar cierre};
+  \node[red, dashed] (lat) at (3.5,-1.15) {Cada 30\,s:\\latido con RSSI};
+  \node[accion, dashed] (cmd) at (-3.5,-1.15) {Orden de abrir:\\pestillo 3\,s};
+
+  \draw[flecha] (start) -- (conf);
+  \draw[flecha] (conf) -- (leer);
+  \draw[flecha] (leer) -- (d1);
+  \draw[flecha] (d1) -- node[si, right] {Sí} (d2);
+  \draw[flecha] (d2) -- node[si, right] {Sí} (crit);
+  \draw[flecha] (crit) -- (d3);
+  \draw[flecha] (d3) -- node[si, right] {Sí} (lock);
+  \draw[flecha] (lock) -- (pub);
+  % Sin activación: vuelve a leer
+  \draw[flecha] (d1.east) -- node[si, above] {No} ++(0.55,0) |- (leer.east);
+  % Un solo sensor: alerta leve y se publica
+  \draw[flecha] (d2.east) -- node[si, above] {No} (leve.west);
+  \draw[flecha] (leve.south) |- (pub.east);
+  % Puerta abierta: el bloqueo espera
+  \draw[flecha] (d3.west) -- node[si, above] {No} (pend.east);
+  \draw[flecha] (pend.south) |- (lock.west);
+  % Después de publicar, vuelve a leer
+  \draw[flecha, draw=black!45] (pub.south) -- ++(0,-0.4) -| (-5.2,-2.45) -- (leer.west);
+\end{tikzpicture}

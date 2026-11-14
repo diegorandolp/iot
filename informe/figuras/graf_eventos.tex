@@ -1,0 +1,15 @@
+% Activaciones por sensor y cuántas fueron falsas, de figuras/datos/eventos.dat
+\begin{tikzpicture}
+\begin{axis}[grafico, ybar, bar width=0.55cm,
+  width=\anchografico, height=\altografico,
+  symbolic x coords={PIR,MC-38,SW-420}, xtick=data,
+  enlarge x limits=0.25, ymin=0, enlarge y limits={upper, value=0.25},
+  ylabel={Eventos},
+  nodes near coords, every node near coord/.append style={font=\scriptsize, text=tinta},
+  legend style={at={(0.5,1.03)}, anchor=south, legend columns=2}]
+  \addplot[fill=serie1, draw=white] table[x=sensor, y=activaciones] {figuras/datos/eventos.dat};
+  \addplot[fill=serie2, draw=white] table[x=sensor, y=falsas] {figuras/datos/eventos.dat};
+  \legend{Activaciones, Falsas}
+  \marcaejemplo
+\end{axis}
+\end{tikzpicture}

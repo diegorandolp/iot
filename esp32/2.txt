@@ -1,0 +1,525 @@
+/*
+  Puerta inteligente ESP32 — conexión directa a AWS IoT Core
+  Curso: Internet de las Cosas (UTEC)
+
+  Va en la misma carpeta que secrets.h (Wi-Fi, endpoint y certificados).
+
+  PUERTA
+  - Normalmente BLOQUEADA (servo cerrado, LED rojo).
+  - Al recibir {"accion":"abrir",...} en casa/puerta/comandos: desbloquea (LED verde).
+  - Se vuelve a bloquear SOLA cuando el magnético detecta que la puerta se abrió
+    y luego se cerró. Si nadie la abre en 1 minuto, también se bloquea.
+  - Si sigue abierta pasado 1 minuto: buzzer continuo + evento "puerta_abierta"
+    hasta que el magnético detecte que se cerró.
+
+  SENSORES (con el sistema ARMADO)
+  - 1 sensor = "leve"; 2 sensores distintos en 10 s = "critico" (buzzer + bloqueo).
+  - Magnético sin "abrir" previo = "puerta_forzada".
+  - Gas (MQ-2) = "humo", siempre "critico": buzzer + desbloquea (para poder salir).
+
+  MQTT (AWS IoT Core, TLS 8883, Client ID esp32_puerta)
+    casa/puerta/comandos <- {"accion":"abrir","duracion_ms":3000,"request_id":"..."}
+                            también acepta "armar", "desarmar", "silenciar"
+    casa/puerta/eventos  -> {"tipo","nivel","mensaje","seq","ts_evento",...}
+    casa/puerta/estado   -> {"puerta","cerradura","rssi","seq","ts_evento",...}
+                            cada 30 s y en cada cambio
+
+  Librerías (Library Manager): PubSubClient (Nick O'Leary), ESP32Servo (Kevin Harrington).
+  Placa: "ESP32 Dev Module".
+*/
+
+#include <WiFi.h>
+#include <WiFiClientSecure.h>
+#include <PubSubClient.h>
+#include <ESP32Servo.h>
+#include <time.h>
+#include <sys/time.h>
+#include <esp_system.h>
+#include "secrets.h"
+
+// ----------------------------- Tópicos -----------------------------
+// La política de AWS solo permite estos tres. Publicar en otro = desconexión.
+const char* TOPIC_COMANDOS = "casa/puerta/comandos";
+const char* TOPIC_EVENTOS  = "casa/puerta/eventos";
+const char* TOPIC_ESTADO   = "casa/puerta/estado";
+
+// ----------------------------- Pines -----------------------------
+const int PIN_PIR       = 27;
+const int PIN_PUERTA    = 26;  // MC-38 a GND, pull-up interno
+const int PIN_VIBRACION = 25;
+const int PIN_GAS       = 34;  // AO del MQ-2 por divisor 10k/20k
+const int PIN_BUZZER    = 32;  // buzzer activo
+const int PIN_LED_ROJO  = 33;  // 220 Ω en serie
+const int PIN_LED_VERDE = 14;  // 220 Ω en serie
+const int PIN_SERVO     = 13;
+const int PIN_LED_WIFI  = 2;   // LED azul de la placa = conectado a AWS
+
+const bool USAR_MAGNETICO = true;
+const bool USAR_VIBRACION = true;
+const bool VIBRACION_ACTIVA_EN_ALTO = true;  // si el LED del SW-420 queda prendido en reposo: false
+
+const int SERVO_DESBLOQUEADO = 0;
+const int SERVO_BLOQUEADO    = 90;
+
+// ---------------------------- Tiempos ----------------------------
+const uint32_t PUERTA_ABIERTA_MAX_MS  = 60000;
+const uint32_t ANTIRREBOTE_PUERTA_MS  = 150;
+const uint32_t SIRENA_MS              = 30000;
+const uint32_t VENTANA_CORRELACION_MS = 10000;
+const uint32_t LATIDO_MS              = 30000;
+const uint32_t CALENTAMIENTO_PIR_MS   = 60000;
+const uint32_t REINTENTO_MQTT_MS      = 5000;
+
+// ------------------------------ Gas ------------------------------
+const uint16_t UMBRAL_GAS           = 1800;
+const uint16_t HISTERESIS_GAS       = 200;
+const uint32_t CALENTAMIENTO_GAS_MS = 60000;
+const uint32_t MUESTREO_GAS_MS      = 500;
+
+// ============================ TIPOS ==============================
+enum Sensor : uint8_t {
+  S_PIR = 0, S_PUERTA = 1, S_VIBRACION = 2, N_SENSORES = 3,
+  S_GAS = 3, S_PUERTA_ABIERTA = 4
+};
+// Nombres de "tipo" según la lista de eventos del backend
+const char* TIPO_EVENTO[5] = {"movimiento", "puerta_forzada", "vibracion", "humo", "puerta_abierta"};
+const char* MENSAJE_EVENTO[5] = {
+  "Movimiento detectado en la entrada",
+  "Puerta abierta sin autorizacion",
+  "Posible intento de ingreso forzado",
+  "Se detecto humo o gas",
+  "La puerta lleva mas de 1 minuto abierta"
+};
+const uint32_t BLOQUEO_REDISPARO_MS[N_SENSORES] = {3000, 1000, 2000};
+
+struct Evento {
+  uint8_t  sensor;
+  bool     critico;
+  uint8_t  correlacionado;  // 255 = ninguno
+  uint16_t valor;           // humo: lectura ADC; puerta_abierta: segundos
+  uint64_t tsMs;
+};
+
+enum Comando : uint8_t { CMD_ARMAR = 1, CMD_DESARMAR, CMD_SILENCIAR, CMD_ABRIR };
+
+// ======================= ESTADO COMPARTIDO =======================
+QueueHandle_t colaEventos;
+QueueHandle_t colaComandos;
+
+volatile bool     armado              = true;
+volatile bool     alarmaActiva        = false;
+volatile bool     cerraduraBloqueada  = true;
+volatile bool     puertaFisicaAbierta = false;
+volatile bool     forzarLatido        = false;
+volatile uint32_t eventosNoEnviados   = 0;
+volatile bool     flagVibracion       = false;
+volatile uint16_t ultimoGas           = 0;
+
+uint32_t idArranque;
+
+// ========================== UTILIDADES ===========================
+uint64_t epochMs() {
+  struct timeval tv;
+  gettimeofday(&tv, nullptr);
+  if (tv.tv_sec < 1700000000) return 0;
+  return (uint64_t)tv.tv_sec * 1000ULL + tv.tv_usec / 1000;
+}
+
+void IRAM_ATTR isrVibracion() { flagVibracion = true; }
+
+void encolarEvento(uint8_t sensor, bool critico, uint8_t con, uint16_t valor) {
+  Evento e;
+  e.sensor = sensor; e.critico = critico; e.correlacionado = con;
+  e.valor = valor;   e.tsMs = epochMs();
+  Serial.printf("Evento: %s -> %s (valor %u)\n", TIPO_EVENTO[sensor],
+                critico ? "critico" : "leve", valor);
+  if (xQueueSend(colaEventos, &e, 0) != pdTRUE) eventosNoEnviados = eventosNoEnviados + 1;
+}
+
+// ==================== PUERTA Y BUZZER (núcleo 1) ====================
+Servo servo;
+
+bool     sirenaOn = false;
+uint32_t inicioSirena = 0;
+bool     aperturaAutorizada = false;
+bool     seAbrioFisicamente = false;
+uint32_t inicioApertura = 0;
+bool     alarmaPuerta = false;
+bool     gasAlto = false;
+
+bool     lecturaCrudaPuerta = false;
+uint32_t cambioCrudoPuerta  = 0;
+
+bool leerMagneticoCrudo() {
+  if (!USAR_MAGNETICO) return false;
+  return digitalRead(PIN_PUERTA) == HIGH;   // imán lejos = abierta
+}
+
+void desbloquear(const char* motivo) {
+  servo.write(SERVO_DESBLOQUEADO);
+  digitalWrite(PIN_LED_ROJO, LOW);
+  digitalWrite(PIN_LED_VERDE, HIGH);
+  if (!aperturaAutorizada) {
+    inicioApertura = millis();
+    seAbrioFisicamente = puertaFisicaAbierta;
+  }
+  aperturaAutorizada = true;
+  cerraduraBloqueada = false;
+  forzarLatido = true;
+  Serial.printf("Cerradura DESBLOQUEADA (%s)\n", motivo);
+}
+
+void bloquear(const char* motivo) {
+  servo.write(SERVO_BLOQUEADO);
+  digitalWrite(PIN_LED_ROJO, HIGH);
+  digitalWrite(PIN_LED_VERDE, LOW);
+  aperturaAutorizada = false;
+  seAbrioFisicamente = false;
+  alarmaPuerta = false;
+  cerraduraBloqueada = true;
+  forzarLatido = true;
+  Serial.printf("Cerradura BLOQUEADA (%s)\n", motivo);
+}
+
+void actualizarPuerta() {
+  uint32_t ahora = millis();
+
+  bool cruda = leerMagneticoCrudo();
+  if (cruda != lecturaCrudaPuerta) { lecturaCrudaPuerta = cruda; cambioCrudoPuerta = ahora; }
+  if (ahora - cambioCrudoPuerta >= ANTIRREBOTE_PUERTA_MS && cruda != puertaFisicaAbierta) {
+    puertaFisicaAbierta = cruda;
+    forzarLatido = true;
+    Serial.printf("Puerta fisicamente %s\n", cruda ? "ABIERTA" : "CERRADA");
+  }
+
+  if (!aperturaAutorizada || gasAlto) return;
+
+  if (puertaFisicaAbierta) seAbrioFisicamente = true;
+
+  if (seAbrioFisicamente && !puertaFisicaAbierta) {
+    bloquear("el magnetico detecto la puerta cerrada");
+    return;
+  }
+
+  if (ahora - inicioApertura >= PUERTA_ABIERTA_MAX_MS) {
+    if (!seAbrioFisicamente) {
+      bloquear("nadie abrio la puerta en 1 minuto");
+    } else if (!alarmaPuerta) {
+      alarmaPuerta = true;
+      forzarLatido = true;
+      encolarEvento(S_PUERTA_ABIERTA, true, 255, (ahora - inicioApertura) / 1000);
+    }
+  }
+}
+
+void activarSirena() { sirenaOn = true; inicioSirena = millis(); }
+
+void actualizarBuzzer() {
+  if (sirenaOn && millis() - inicioSirena >= SIRENA_MS) sirenaOn = false;
+  bool buzzer = sirenaOn || alarmaPuerta;
+  digitalWrite(PIN_BUZZER, buzzer ? HIGH : LOW);
+  if (buzzer != alarmaActiva) forzarLatido = true;
+  alarmaActiva = buzzer;
+}
+
+// ===================== SENSORES (núcleo 1) =======================
+uint32_t ultimaActivacion[N_SENSORES];
+bool     activadoAlgunaVez[N_SENSORES];
+bool     estadoPrevio[N_SENSORES];
+
+bool sensorHabilitado(uint8_t s) {
+  if (s == S_PUERTA)    return USAR_MAGNETICO;
+  if (s == S_VIBRACION) return USAR_VIBRACION;
+  return true;
+}
+
+uint8_t sensoresIntrusionHabilitados() {
+  uint8_t n = 0;
+  for (uint8_t i = 0; i < N_SENSORES; i++) if (sensorHabilitado(i)) n++;
+  return n;
+}
+
+bool leerActivo(uint8_t s) {
+  switch (s) {
+    case S_PIR:       return digitalRead(PIN_PIR) == HIGH;
+    case S_PUERTA:    return digitalRead(PIN_PUERTA) == HIGH;
+    case S_VIBRACION: return digitalRead(PIN_VIBRACION) == (VIBRACION_ACTIVA_EN_ALTO ? HIGH : LOW);
+  }
+  return false;
+}
+
+void procesarActivacion(uint8_t s) {
+  uint32_t ahora = millis();
+  if (activadoAlgunaVez[s] && ahora - ultimaActivacion[s] < BLOQUEO_REDISPARO_MS[s]) return;
+
+  bool unSoloSensor = sensoresIntrusionHabilitados() < 2;
+  uint8_t otro = 255;
+  for (uint8_t j = 0; j < N_SENSORES; j++) {
+    if (!activadoAlgunaVez[j] || !sensorHabilitado(j)) continue;
+    if (j == s && !unSoloSensor) continue;
+    if (ahora - ultimaActivacion[j] <= VENTANA_CORRELACION_MS) { otro = j; break; }
+  }
+  ultimaActivacion[s] = ahora;
+  activadoAlgunaVez[s] = true;
+
+  bool critico = (otro != 255);
+  if (critico) {                 // actuar primero, sin depender de Internet
+    activarSirena();
+    bloquear("evento critico de intrusion");
+  }
+  encolarEvento(s, critico, otro, 0);
+}
+
+uint32_t ultimoMuestreoGas = 0;
+
+void revisarGas() {
+  uint32_t ahora = millis();
+  if (ahora - ultimoMuestreoGas < MUESTREO_GAS_MS) return;
+  ultimoMuestreoGas = ahora;
+
+  uint32_t suma = 0;
+  for (int i = 0; i < 8; i++) suma += analogRead(PIN_GAS);
+  uint16_t valor = suma / 8;
+  ultimoGas = valor;
+  if (ahora < CALENTAMIENTO_GAS_MS) return;
+
+  if (!gasAlto && valor >= UMBRAL_GAS) {
+    gasAlto = true;
+    activarSirena();
+    desbloquear("humo o gas detectado");
+    encolarEvento(S_GAS, true, 255, valor);
+  } else if (gasAlto && valor + HISTERESIS_GAS < UMBRAL_GAS) {
+    gasAlto = false;
+    inicioApertura = millis();
+    Serial.println("Gas normalizado");
+  }
+}
+
+void reiniciarCorrelacion() {
+  for (uint8_t i = 0; i < N_SENSORES; i++) activadoAlgunaVez[i] = false;
+}
+
+void atenderComandos() {
+  uint8_t c;
+  while (xQueueReceive(colaComandos, &c, 0) == pdTRUE) {
+    switch (c) {
+      case CMD_ABRIR:     desbloquear("comando abrir desde la app"); break;
+      case CMD_ARMAR:     armado = true; reiniciarCorrelacion(); Serial.println("Sistema ARMADO"); break;
+      case CMD_DESARMAR:  armado = false; sirenaOn = false;       Serial.println("Sistema DESARMADO"); break;
+      case CMD_SILENCIAR: sirenaOn = false;                       Serial.println("Buzzer SILENCIADO"); break;
+    }
+    forzarLatido = true;
+  }
+}
+
+// ======================== RED / AWS (núcleo 0) =========================
+WiFiClientSecure net;
+PubSubClient     mqtt(net);
+uint32_t         seq = 0;
+
+// Copia el texto de "clave":"valor" de un JSON plano. Devuelve false si no está.
+bool extraerTexto(const char* json, const char* clave, char* destino, size_t n) {
+  char patron[32];
+  snprintf(patron, sizeof(patron), "\"%s\"", clave);
+  const char* p = strstr(json, patron);
+  if (!p) return false;
+  p = strchr(p + strlen(patron), ':');
+  if (!p) return false;
+  p = strchr(p, '"');
+  if (!p) return false;
+  p++;
+  size_t i = 0;
+  while (*p && *p != '"' && i < n - 1) destino[i++] = tolower(*p++);
+  destino[i] = '\0';
+  return i > 0;
+}
+
+void callbackMqtt(char* topic, byte* payload, unsigned int len) {
+  char msg[256];
+  unsigned int n = len < sizeof(msg) - 1 ? len : sizeof(msg) - 1;
+  memcpy(msg, payload, n);
+  msg[n] = '\0';
+  Serial.printf("Mensaje en %s: %s\n", topic, msg);
+
+  // Formato del backend: {"accion":"abrir",...}. También acepta texto plano para pruebas.
+  char accion[16];
+  if (!extraerTexto(msg, "accion", accion, sizeof(accion))) {
+    unsigned int i = 0;
+    for (; i < n && i < sizeof(accion) - 1; i++) accion[i] = tolower(msg[i]);
+    accion[i] = '\0';
+  }
+
+  uint8_t c = 0;
+  if      (!strcmp(accion, "abrir"))     c = CMD_ABRIR;
+  else if (!strcmp(accion, "armar"))     c = CMD_ARMAR;
+  else if (!strcmp(accion, "desarmar"))  c = CMD_DESARMAR;
+  else if (!strcmp(accion, "silenciar")) c = CMD_SILENCIAR;
+
+  if (c) xQueueSend(colaComandos, &c, 0);
+  else   Serial.printf("Accion desconocida: %s\n", accion);
+}
+
+void publicarEvento(const Evento& e) {
+  char buf[384];
+  snprintf(buf, sizeof(buf),
+    "{\"tipo\":\"%s\",\"nivel\":\"%s\",\"mensaje\":\"%s\",\"con\":%s%s%s,"
+    "\"valor\":%u,\"seq\":%lu,\"boot\":%lu,\"ts_evento\":%llu}",
+    TIPO_EVENTO[e.sensor], e.critico ? "critico" : "leve", MENSAJE_EVENTO[e.sensor],
+    e.correlacionado == 255 ? "" : "\"",
+    e.correlacionado == 255 ? "null" : TIPO_EVENTO[e.correlacionado],
+    e.correlacionado == 255 ? "" : "\"",
+    (unsigned)e.valor, (unsigned long)++seq, (unsigned long)idArranque,
+    (unsigned long long)e.tsMs);
+  if (mqtt.publish(TOPIC_EVENTOS, buf)) Serial.printf("-> AWS evento: %s\n", buf);
+  else Serial.println("publish() de evento fallo");
+}
+
+void publicarEstado() {
+  char buf[384];
+  snprintf(buf, sizeof(buf),
+    "{\"puerta\":\"%s\",\"cerradura\":\"%s\",\"armado\":%s,\"alarma\":%s,"
+    "\"gas\":%u,\"rssi\":%d,\"no_enviados\":%lu,\"seq\":%lu,\"boot\":%lu,\"ts_evento\":%llu}",
+    !USAR_MAGNETICO ? "desconocida" : (puertaFisicaAbierta ? "abierta" : "cerrada"),
+    cerraduraBloqueada ? "bloqueada" : "desbloqueada",
+    armado ? "true" : "false", alarmaActiva ? "true" : "false",
+    (unsigned)ultimoGas, WiFi.RSSI(), (unsigned long)eventosNoEnviados,
+    (unsigned long)++seq, (unsigned long)idArranque, (unsigned long long)epochMs());
+  if (mqtt.publish(TOPIC_ESTADO, buf)) Serial.printf("-> AWS estado: %s\n", buf);
+  else Serial.println("publish() de estado fallo");
+}
+
+bool conectarAWS() {
+  Serial.print("Conectando a AWS IoT Core... ");
+  if (!mqtt.connect(CLIENT_ID)) {
+    Serial.printf("fallo, estado=%d\n", mqtt.state());
+    return false;
+  }
+  Serial.println("OK");
+  mqtt.subscribe(TOPIC_COMANDOS, 1);
+  forzarLatido = true;
+  return true;
+}
+
+void tareaRed(void*) {
+  WiFi.mode(WIFI_STA);
+  WiFi.setAutoReconnect(true);
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
+
+  net.setCACert(AWS_ROOT_CA);
+  net.setCertificate(DEVICE_CERT);
+  net.setPrivateKey(DEVICE_KEY);
+
+  mqtt.setServer(AWS_ENDPOINT, AWS_PORT);
+  mqtt.setCallback(callbackMqtt);
+  mqtt.setBufferSize(512);
+  mqtt.setKeepAlive(30);
+  mqtt.setSocketTimeout(10);
+
+  bool wifiAvisado = false, ntpIniciado = false, horaAvisada = false;
+  uint32_t ultimoIntento = 0, ultimoLatido = 0;
+
+  for (;;) {
+    bool wifiOk = (WiFi.status() == WL_CONNECTED);
+
+    if (wifiOk) {
+      if (!wifiAvisado) {
+        Serial.printf("Wi-Fi OK, IP %s\n", WiFi.localIP().toString().c_str());
+        wifiAvisado = true;
+      }
+      if (!ntpIniciado) {
+        configTime(0, 0, "pool.ntp.org", "time.google.com");
+        ntpIniciado = true;
+      }
+      bool horaLista = epochMs() != 0;          // TLS necesita la hora correcta
+      if (horaLista && !horaAvisada) { Serial.println("NTP OK"); horaAvisada = true; }
+
+      if (horaLista && !mqtt.connected() && millis() - ultimoIntento >= REINTENTO_MQTT_MS) {
+        ultimoIntento = millis();
+        conectarAWS();
+      }
+    } else {
+      wifiAvisado = false;
+    }
+
+    digitalWrite(PIN_LED_WIFI, mqtt.connected() ? HIGH : LOW);
+
+    if (mqtt.connected()) {
+      mqtt.loop();
+      Evento e;
+      while (xQueueReceive(colaEventos, &e, 0) == pdTRUE) publicarEvento(e);
+      if (forzarLatido || millis() - ultimoLatido >= LATIDO_MS) {
+        forzarLatido = false;
+        ultimoLatido = millis();
+        publicarEstado();
+      }
+    } else {
+      // Sin conexión la alarma local sigue funcionando; estos eventos se cuentan
+      Evento e;
+      while (xQueueReceive(colaEventos, &e, 0) == pdTRUE) eventosNoEnviados = eventosNoEnviados + 1;
+    }
+    vTaskDelay(pdMS_TO_TICKS(20));
+  }
+}
+
+// ========================== SETUP / LOOP ==========================
+void setup() {
+  digitalWrite(PIN_BUZZER, LOW);
+  pinMode(PIN_BUZZER, OUTPUT);
+  pinMode(PIN_LED_ROJO, OUTPUT);
+  pinMode(PIN_LED_VERDE, OUTPUT);
+  pinMode(PIN_LED_WIFI, OUTPUT);
+
+  pinMode(PIN_PIR, INPUT);
+  pinMode(PIN_PUERTA, INPUT_PULLUP);
+  pinMode(PIN_VIBRACION, INPUT);
+  analogReadResolution(12);
+
+  Serial.begin(115200);
+  delay(200);
+
+  servo.setPeriodHertz(50);
+  servo.attach(PIN_SERVO, 500, 2400);
+
+  puertaFisicaAbierta = leerMagneticoCrudo();
+  lecturaCrudaPuerta  = puertaFisicaAbierta;
+  bloquear("arranque");
+
+  if (USAR_VIBRACION)
+    attachInterrupt(digitalPinToInterrupt(PIN_VIBRACION), isrVibracion,
+                    VIBRACION_ACTIVA_EN_ALTO ? RISING : FALLING);
+
+  idArranque = esp_random();
+  Serial.printf("Puerta %s iniciando (boot %lu)\n", CLIENT_ID, (unsigned long)idArranque);
+
+  for (uint8_t i = 0; i < N_SENSORES; i++) {
+    activadoAlgunaVez[i] = false;
+    estadoPrevio[i] = leerActivo(i);
+  }
+
+  colaEventos  = xQueueCreate(20, sizeof(Evento));
+  colaComandos = xQueueCreate(8, sizeof(uint8_t));
+  xTaskCreatePinnedToCore(tareaRed, "red", 12288, nullptr, 1, nullptr, 0);  // TLS necesita más pila
+}
+
+void loop() {
+  atenderComandos();
+
+  bool calentando = millis() < CALENTAMIENTO_PIR_MS;
+  for (uint8_t s = 0; s < N_SENSORES; s++) {
+    if (!sensorHabilitado(s)) continue;
+    bool activo = leerActivo(s);
+    bool flanco = activo && !estadoPrevio[s];
+    if (s == S_VIBRACION && flagVibracion) { flanco = true; flagVibracion = false; }
+    estadoPrevio[s] = activo;
+
+    if (!flanco || !armado) continue;
+    if (s == S_PUERTA && aperturaAutorizada) continue;  // apertura autorizada, no intrusión
+    if (s == S_PIR && calentando) continue;
+    procesarActivacion(s);
+  }
+
+  revisarGas();
+  actualizarPuerta();
+  actualizarBuzzer();
+  delay(10);
+}
